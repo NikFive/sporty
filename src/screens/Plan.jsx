@@ -523,7 +523,7 @@ export function Plan({ athlete, todayDate }) {
       </div>
 
       <div class="title-block pl-title">
-        <h1 class="large-title">План</h1>
+        <h1 class="large-title" tabindex="-1">План</h1>
       </div>
 
       <section class="card pl-hero">

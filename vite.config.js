@@ -7,14 +7,17 @@ const BG = '#121318'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // время сборки = «версия плана», показываем в профиле
+  define: { __BUILD_TIME__: JSON.stringify(new Date().toISOString()) },
   plugins: [
     preact(),
     yaml(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      injectRegister: false, // регистрируем сами в src/lib/update.js — с проверкой обновлений
       includeAssets: ['favicon.ico', 'icon.svg', 'apple-touch-icon-180x180.png'],
       manifest: {
+        id: '/',
         name: 'Sporty — план к 70.3',
         short_name: 'Sporty',
         description: 'План тренировок к 70.3',
@@ -35,6 +38,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff2,svg,png,ico}'],
         navigateFallback: 'index.html',
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
       },
     }),
   ],

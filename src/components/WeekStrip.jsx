@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Moon } from 'lucide-preact'
-import { DAY_SHORT, addDays, fmtRange, getWeek, keyZone, parse, weekOf } from '../lib/plan'
+import { DAY_LONG, DAY_SHORT, MONTHS_GEN, addDays, fmtRange, getWeek, keyZone, parse, weekOf } from '../lib/plan'
 import { goDay, useSwipe } from '../lib/nav'
 import { isDone } from '../lib/done'
 
@@ -24,7 +24,7 @@ export function WeekStrip({ monday, selected, todayDate, athlete }) {
           <button onClick={() => shiftWeek(1)} aria-label="Следующая неделя"><ChevronRight size={22} strokeWidth={2.25} /></button>
         </span>
       </div>
-      <ol class="week-days">
+      <ol class="week-days" role="list">
         {days.map((d, i) => {
           const medical = d.rest && d.event?.kind === 'medical'
           const cls = [
@@ -34,12 +34,25 @@ export function WeekStrip({ monday, selected, todayDate, athlete }) {
             d.date < todayDate && 'is-past',
             d.event?.kind === 'trip' && 'is-trip',
           ].filter(Boolean).join(' ')
+          const done = d.items.filter((it) => isDone(athlete, d.date, it.id)).length
+          const pd = parse(d.date)
+          const label = [
+            `${DAY_LONG[i]}, ${pd.getDate()} ${MONTHS_GEN[pd.getMonth()]}`,
+            d.date === todayDate && 'сегодня',
+            medical ? 'восстановление' : d.rest ? 'выходной' : d.items.length ? `сделано ${done} из ${d.items.length}` : null,
+          ].filter(Boolean).join(', ')
           return (
             <li key={d.date}>
-              <button class={cls} onClick={() => goDay(d.date)} aria-current={d.date === selected ? 'date' : undefined}>
+              <button
+                class={cls}
+                onClick={() => goDay(d.date)}
+                aria-label={label}
+                aria-pressed={d.date === selected}
+                aria-current={d.date === todayDate ? 'date' : undefined}
+              >
                 <span class="wd-dow">{DAY_SHORT[i]}</span>
                 <span class="wd-num num">{parse(d.date).getDate()}</span>
-                <span class="wd-dots">
+                <span class="wd-dots" aria-hidden="true">
                   {medical ? (
                     <span class="dot dot-medical" title="Восстановление" />
                   ) : d.rest ? (

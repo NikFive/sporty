@@ -75,7 +75,7 @@ export function Workout({ date, idx, athlete, todayDate }) {
 
       <div class="wo-head">
         <SportBadge workout={w} large />
-        <h1 class="wo-title">{w.title}</h1>
+        <h1 class="wo-title" tabindex="-1">{w.title}</h1>
       </div>
       <p class="wo-sub">{sub}</p>
 

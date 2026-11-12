@@ -5,6 +5,8 @@ import { Profile } from './screens/Profile'
 import { Plan } from './screens/Plan'
 import { Workout } from './screens/Workout'
 import { ChevronRight, Flag } from 'lucide-preact'
+import { PullToRefresh } from './components/PullToRefresh'
+import { consumeRefreshedFlag } from './lib/update'
 
 // Выбранный атлет: cookie на 400 дней + localStorage как запасной вариант.
 const KEY = 'sporty.athlete'
@@ -97,6 +99,25 @@ export function App() {
   const pick = (a) => { setAthlete(a); save(a) }
   const weeks = weeksToRace(now)
 
+  // «Обновлено» после жеста «потянуть вниз»
+  const [toast, setToast] = useState(consumeRefreshedFlag)
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(false), 2200)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  // Заголовок вкладки = заголовок экрана; после смены экрана фокус на заголовок (VoiceOver не теряется).
+  const prevView = useRef(null)
+  useEffect(() => {
+    const h1 = document.querySelector('main h1, .pick h1')
+    document.title = h1 ? `${h1.textContent} · Sporty` : 'Sporty'
+    const prev = prevView.current
+    prevView.current = route.view
+    const lost = !document.activeElement || document.activeElement === document.body
+    if (prev && (route.view !== prev || route.view !== 'day' || lost)) h1?.focus({ preventScroll: true })
+  }, [route.hash, route.view, athlete])
+
   if (!athlete)
     return (
       <div class="pick">
@@ -139,6 +160,8 @@ export function App() {
         </header>
       )}
       {screen}
+      <PullToRefresh />
+      {toast && <div class="toast" role="status">План обновлён</div>}
     </div>
   )
 }

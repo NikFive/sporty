@@ -80,9 +80,9 @@ export function Day({ date, athlete, todayDate, dir }) {
   const isRace = day.event?.kind === 'race'
 
   return (
-    <>
+    <main>
       <div class="title-block">
-        <h1 class="large-title">{title}</h1>
+        <h1 class="large-title" tabindex="-1">{title}</h1>
         <p class="subtitle">{sub}</p>
       </div>
 
@@ -152,7 +152,7 @@ export function Day({ date, athlete, todayDate, dir }) {
           Сегодня
         </button>
       )}
-    </>
+    </main>
   )
 }
 

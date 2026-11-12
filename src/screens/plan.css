@@ -36,7 +36,7 @@
 .pl-ph-title { display: flex; align-items: center; gap: 8px; margin-bottom: 0; }
 .pl-now {
   display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 12px;
-  font-size: 13px; font-weight: 600; color: var(--accent);
+  font-size: 13px; font-weight: 600; color: var(--accent-text);
   background: rgba(10, 132, 255, 0.18);
 }
 .pl-ph-range { margin: 2px 4px 8px; }
@@ -54,7 +54,7 @@
   white-space: nowrap;
 }
 .pl-date { flex: none; font-size: 17px; line-height: 22px; }
-.pl-wk.is-now .pl-date { color: var(--accent); font-weight: 600; }
+.pl-wk.is-now .pl-date { color: var(--accent-text); font-weight: 600; }
 .pl-tag {
   min-width: 0; overflow: hidden; text-overflow: ellipsis;
   font-size: 13px; color: var(--label-3);

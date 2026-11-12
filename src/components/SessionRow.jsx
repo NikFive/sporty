@@ -23,8 +23,9 @@ export function DoneToggle({ athlete, date, item, large = false }) {
     <button
       class={`done-btn${done ? ' is-done' : ''}${large ? ' is-large' : ''}`}
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleDone(athlete, date, item.id) }}
-      aria-pressed={done}
-      aria-label={done ? 'Снять отметку «сделано»' : 'Отметить как сделано'}
+      {...(large
+        ? {} // у большой кнопки видимый текст сам говорит о состоянии
+        : { 'aria-pressed': done, 'aria-label': `Сделано: ${item.workout?.title || ''}` })}
     >
       <span class="done-ring">{done && <Check size={large ? 18 : 15} strokeWidth={3} />}</span>
       {large && <span>{done ? 'Сделано' : 'Отметить как сделано'}</span>}
