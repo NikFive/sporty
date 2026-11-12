@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import { ATHLETES, mondayOf, plan, today, weeksToRace } from './lib/plan'
+import { ATHLETES, fmtDate, mondayOf, plan, today, weeksToRace } from './lib/plan'
 import { Day } from './screens/Day'
 import { Profile } from './screens/Profile'
 import { Plan } from './screens/Plan'
@@ -34,13 +34,17 @@ function parseRoute(hash) {
   return { view: 'day', date: null }
 }
 
+// Откуда открыли профиль — туда и возвращаемся после выбора атлета.
+let returnHash = null
+
 function useRoute(now) {
-  const [route, setRoute] = useState(() => ({ ...parseRoute(location.hash), dir: null }))
+  const [route, setRoute] = useState(() => ({ ...parseRoute(location.hash), dir: null, hash: location.hash || '#/' }))
   const last = useRef(route)
   useEffect(() => {
     const on = () => {
       const r = parseRoute(location.hash)
       const prev = last.current
+      if (r.view === 'me' && prev.view !== 'me') returnHash = prev.hash || '#/'
       // направление анимации при смене дня
       let dir = null
       if (r.view === 'day' && prev.view === 'day') {
@@ -49,7 +53,7 @@ function useRoute(now) {
       }
       if (r.view !== prev.view || r.view === 'workout') window.scrollTo(0, 0)
       else if (dir) window.scrollTo({ top: 0 })
-      last.current = { ...r, dir }
+      last.current = { ...r, dir, hash: location.hash || '#/' }
       setRoute({ ...r, dir })
     }
     addEventListener('hashchange', on)
@@ -97,6 +101,7 @@ export function App() {
     return (
       <div class="pick">
         <h1 class="large-title">Кто ты?</h1>
+        <p class="subtitle" style="margin:0 4px 24px">План к {plan.race.title} · {fmtDate(plan.race.date)} {plan.race.date.slice(0, 4)}</p>
         <div class="card list">
           {ATHLETES.map((a) => (
             <button class="cell" key={a} onClick={() => pick(a)}>
@@ -105,13 +110,17 @@ export function App() {
             </button>
           ))}
         </div>
-        <p class="footnote">Поменять можно в любой момент — вверху экрана</p>
+        <p class="footnote">Сменить можно, нажав на имя вверху экрана</p>
       </div>
     )
 
   let screen
   if (route.view === 'plan') screen = <Plan athlete={athlete} todayDate={now} />
-  else if (route.view === 'me') screen = <Profile athlete={athlete} onPick={pick} />
+  else if (route.view === 'me') {
+    const back = returnHash || '#/'
+    const goBack = () => (returnHash ? history.back() : location.replace('#/'))
+    screen = <Profile athlete={athlete} back={back} onPick={(a) => { pick(a); goBack() }} />
+  }
   else if (route.view === 'workout') screen = <Workout date={route.date} idx={route.idx} athlete={athlete} todayDate={now} />
   else screen = <Day date={route.date || now} athlete={athlete} todayDate={now} dir={route.dir} />
 
@@ -125,7 +134,7 @@ export function App() {
           </a>
           <a class="capsule count" href="#/plan">
             <Flag size={15} strokeWidth={2.25} />
-            <span class="num">{weeks} нед</span>
+            <span class="num">{now === plan.race.date ? 'Старт сегодня' : now > plan.race.date ? 'Сезон' : `${weeks} нед`}</span>
           </a>
         </header>
       )}

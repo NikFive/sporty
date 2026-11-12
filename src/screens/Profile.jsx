@@ -2,11 +2,11 @@ import { Check, ChevronLeft, ChevronRight, Flag } from 'lucide-preact'
 import { ATHLETES, plan } from '../lib/plan'
 
 // Профиль: кто ты (выбор атлета) и ссылка на план.
-export function Profile({ athlete, onPick }) {
+export function Profile({ athlete, back = '#/', onPick }) {
   return (
     <main>
       <div class="nav">
-        <a class="back" href="#/"><ChevronLeft size={26} strokeWidth={2.25} />Сегодня</a>
+        <a class="back" href={back} onClick={(e) => { if (back !== '#/') { e.preventDefault(); history.back() } }}><ChevronLeft size={26} strokeWidth={2.25} />Назад</a>
       </div>
       <h1 class="large-title" style="margin:8px 4px 0">Профиль</h1>
 
@@ -19,7 +19,7 @@ export function Profile({ athlete, onPick }) {
           </button>
         ))}
       </div>
-      <p class="footnote">Запомним на этом телефоне</p>
+      <p class="footnote">Запомним на этом телефоне. После выбора вернёмся назад</p>
 
       <div class="card list" style="margin-top:24px">
         <a class="cell" href="#/plan">

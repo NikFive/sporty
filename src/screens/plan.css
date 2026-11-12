@@ -18,19 +18,19 @@
 .pl-mob { background: var(--mob); }
 
 /* ───── заголовок ───── */
-.pl-title { margin: 4px 4px 20px; }
+.pl-title { margin: 4px 4px 14px; }
 
 /* ───── отсчёт ───── */
 .pl-hero {
-  padding: 20px 20px 20px;
+  padding: 16px 20px 18px;
   background:
     linear-gradient(160deg, rgba(10, 132, 255, 0.16), rgba(10, 132, 255, 0.04) 70%),
     var(--glass);
 }
 .pl-hero-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
-.pl-hero-num { font-size: 56px; line-height: 60px; font-weight: 700; }
+.pl-hero-num { font-size: 52px; line-height: 56px; font-weight: 700; }
 .pl-hero-label { font-size: 20px; line-height: 24px; font-weight: 600; }
-.pl-hero-dist { margin-top: 8px; font-size: 15px; line-height: 20px; color: var(--label-2); }
+.pl-hero-date { margin-top: 2px; font-size: 15px; line-height: 20px; color: var(--label-2); }
 
 /* ───── сезон: фазы ───── */
 .pl-ph-title { display: flex; align-items: center; gap: 8px; margin-bottom: 0; }
@@ -59,15 +59,16 @@
   min-width: 0; overflow: hidden; text-overflow: ellipsis;
   font-size: 13px; color: var(--label-3);
 }
-.pl-tag.is-trip { color: var(--alt); }
+.pl-tag .is-trip { color: var(--alt); }
 
 .pl-total { flex: none; width: 48px; text-align: right; font-size: 15px; color: var(--label-2); }
 .pl-wk.is-draft .pl-total { color: var(--label-3); }
 
-/* фаза — свёрнутый список: одна строка «16 недель» */
+/* фаза — свёрнутый список: «13 недель · 4 разгрузки · пик 9:49» */
 .pl-sum { list-style: none; cursor: pointer; }
 .pl-sum::-webkit-details-marker { display: none; }
-.pl-sum-title { flex: 1; min-width: 0; font-size: 17px; line-height: 22px; }
+.pl-sum-title { flex: 1; min-width: 0; font-size: 17px; line-height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-sum-meta { color: var(--label-2); }
 .pl-sum-chev { transition: transform .2s var(--ease); }
 .pl-weeks[open] .pl-sum-chev { transform: rotate(90deg); }
 
@@ -83,6 +84,10 @@
 .pl-ms-tent { color: var(--label-3); }
 .pl-race .pl-n { color: var(--z4); }
 .pl-race-text { font-size: 17px; line-height: 22px; font-weight: 600; color: var(--label); }
+.pl-race-dist {
+  display: block; overflow: hidden; text-overflow: ellipsis;
+  font-size: 13px; line-height: 18px; font-weight: 400; color: var(--label-2);
+}
 
 /* ───── справка ───── */
 .pl-ref-sum { min-height: 52px; list-style: none; cursor: pointer; }
@@ -111,6 +116,11 @@
 
 /* ───── «Нагрузка»: график недель ───── */
 .ld { padding: 16px; }
+
+/* сегменты: 36px визуально, зона тапа 44px (невидимые 4px сверху и снизу) */
+.ld .seg { border-radius: 20px; }
+.ld .seg button { position: relative; height: 36px; border-radius: 18px; }
+.ld .seg button::after { content: ''; position: absolute; left: 0; right: 0; top: -4px; bottom: -4px; }
 
 /* readout вместо тултипа: 18 + 34 + 18 = 70 */
 .ld-readout { display: block; height: 70px; margin-top: 12px; color: var(--label-2); }
@@ -143,14 +153,14 @@
 .ld-band { position: absolute; top: 0; bottom: 0; background: rgba(255, 255, 255, 0.035); }
 .ld-hair { position: absolute; top: 0; bottom: 0; width: 0.5px; background: var(--separator); }
 .ld-grid { position: absolute; left: 0; right: 0; height: 0.5px; background: var(--separator); transform: translateY(0.25px); }
-.ld-goal { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed rgba(255, 255, 255, 0.45); transform: translateY(0.5px); }
+.ld-goal { position: absolute; height: 0; border-top: 1px dashed rgba(255, 255, 255, 0.8); transform: translateY(0.5px); }
 .ld-tint { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
 .ld-tint.is-now { background: rgba(10, 132, 255, 0.16); }
 .ld-tint.is-sel { background: rgba(255, 255, 255, 0.10); }
 
 .ld-bars {
   position: relative; height: 100%;
-  display: grid; grid-template-columns: repeat(36, 1fr); column-gap: 2px; align-items: end;
+  display: grid; grid-template-columns: repeat(var(--n, 36), 1fr); column-gap: 2px; align-items: end;
   pointer-events: none;
 }
 .ld-bar {
@@ -187,7 +197,7 @@
 .ld-lg-row:first-child .ld-lg:only-child { white-space: normal; }
 .ld-sw { flex: none; width: 9px; height: 9px; border-radius: 2.5px; }
 .ld-sw.is-draft { background: var(--label-2); opacity: 0.5; }
-.ld-sw-dash { flex: none; width: 12px; height: 0; border-top: 1px dashed rgba(255, 255, 255, 0.45); }
+.ld-sw-dash { flex: none; width: 12px; height: 0; border-top: 1px dashed rgba(255, 255, 255, 0.8); }
 .ld-sw-now { flex: none; width: 5px; height: 5px; margin: 0 2px; border-radius: 50%; background: var(--accent); }
 .ld-sw-trip { flex: none; width: 12px; height: 3px; border-radius: 1.5px; background: var(--label-2); }
 .ld-sw-race { flex: none; color: var(--z4); }

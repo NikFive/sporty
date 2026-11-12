@@ -1,9 +1,10 @@
 import { useEffect } from 'preact/hooks'
-import { HeartPulse, MountainSnow, Moon } from 'lucide-preact'
+import { ChevronRight, HeartPulse, MountainSnow, Moon, Users } from 'lucide-preact'
 import {
-  DAY_LONG, DAY_SHORT, MONTHS_GEN, PLAN_START, addDays, daysBetween, dayIndex, fmtDate, fmtHM,
+  ATHLETES, DAY_LONG, DAY_SHORT, MONTHS_GEN, PLAN_START, addDays, daysBetween, dayIndex, fmtDate, fmtHM,
   getDay, mondayOf, parse, plan,
 } from '../lib/plan'
+import { useDoneVersion } from '../lib/done'
 import { goDay, useSwipe } from '../lib/nav'
 import { WeekStrip } from '../components/WeekStrip'
 import { SessionRow } from '../components/SessionRow'
@@ -38,10 +39,29 @@ export function dayKind(day) {
   return t.charAt(0).toUpperCase() + t.slice(1)
 }
 
+// Партнёр в этот день: если у него событие (операция, поездка) или нет такой же общей тренировки —
+// общая тренировка на самом деле «сам».
+function partnerInfo(date, athlete, day) {
+  const other = ATHLETES.find((a) => a !== athlete)
+  if (!other) return { soloIds: new Set(), note: null }
+  const pd = getDay(date, other)
+  const theirTogether = new Set(pd.items.filter((it) => it.together).map((it) => it.id))
+  const soloIds = new Set(day.items.filter((it) => it.together && !theirTogether.has(it.id)).map((it) => it.id))
+  const ev = pd.event && pd.event !== day.event ? pd.event : null
+  const name = plan.athletes[other].name
+  const note = ev && soloIds.size
+    ? `${name}: ${ev.title.toLowerCase()} до ${fmtDate(ev.end)} — общие тренировки делаешь сам`
+    : null
+  return { soloIds, note }
+}
+
 export function Day({ date, athlete, todayDate, dir }) {
   const day = getDay(date, athlete)
   const total = day.items.reduce((a, it) => a + it.minutes, 0)
   const swipe = useSwipe(() => goDay(addDays(date, 1)), () => goDay(addDays(date, -1)))
+  useDoneVersion()
+  const partner = partnerInfo(date, athlete, day)
+  const deload = day.week?.kind === 'deload' && !day.event && !day.rest
 
   useEffect(() => {
     const on = (e) => {
@@ -55,7 +75,7 @@ export function Day({ date, athlete, todayDate, dir }) {
   // Заголовок: «Чт, 12 ноября». Под ним — «Сегодня · Кардио + силовая».
   const rel = REL[daysBetween(todayDate, date)]
   const title = `${DAY_SHORT[dayIndex(date)]}, ${dateLong(date)}`
-  const sub = [rel, dayKind(day)].filter(Boolean).join(' · ')
+  const sub = [rel, dayKind(day), total > 0 && fmtHM(total), deload && 'разгрузка −30%'].filter(Boolean).join(' · ')
 
   const isRace = day.event?.kind === 'race'
 
@@ -81,15 +101,17 @@ export function Day({ date, athlete, todayDate, dir }) {
         )}
 
         {isRace ? (
-          <div class="card race">
+          <a class="card race" href={day.items[0] ? `#/d/${date}/${day.items[0].key}` : '#/plan'}>
             <h2>{plan.race.title}</h2>
             <p>{plan.race.distances}</p>
-          </div>
+            <span class="race-cta">План гонки<ChevronRight size={18} strokeWidth={2.5} /></span>
+          </a>
         ) : day.rest ? (
           day.event?.kind === 'medical' ? (
             <div class="card rest">
               <span class="rest-icon is-medical"><HeartPulse size={26} strokeWidth={2} /></span>
-              <h2>{day.event.title} · восстановление</h2>
+              <h2>{day.event.title} · день {daysBetween(day.event.start, date) + 1} из {daysBetween(day.event.start, day.event.end) + 1}</h2>
+              <p class="rest-lead">Без тренировок до {fmtDate(day.event.end)}</p>
               {day.event.note && <p>{day.event.note}</p>}
             </div>
           ) : (
@@ -101,13 +123,24 @@ export function Day({ date, athlete, todayDate, dir }) {
           )
         ) : day.outside ? (
           <div class="card rest">
-            <h2>{date < PLAN_START ? 'Скоро старт' : 'Пока не расписано'}</h2>
+            <h2>{date < PLAN_START ? 'Скоро старт' : date > plan.race.date ? 'Сезон завершён' : 'Пока не расписано'}</h2>
             {date < PLAN_START && <p>План начинается {fmtDate(PLAN_START)}</p>}
+            {date > plan.race.date && <a class="link" href="#/plan">Посмотреть сезон</a>}
           </div>
         ) : (
-          <div class="card list">
-            {day.items.map((it) => <SessionRow key={it.key} item={it} date={date} />)}
-          </div>
+          <>
+            {partner.note && (
+              <div class="card event">
+                <span class="badge bg-mob"><Users size={18} strokeWidth={2} /></span>
+                <p class="event-solo">{partner.note}</p>
+              </div>
+            )}
+            <div class="card list">
+              {day.items.map((it) => (
+                <SessionRow key={it.key} item={it} date={date} athlete={athlete} solo={partner.soloIds.has(it.id)} />
+              ))}
+            </div>
+          </>
         )}
         {day.template?.draft && !day.event && !day.rest && <p class="footnote">Черновик — детали могут поменяться</p>}
 
@@ -133,10 +166,12 @@ function Ahead({ date, athlete }) {
       <div class="card list">
         {days.map((d) => {
           const total = d.items.reduce((a, it) => a + it.minutes, 0)
-          const titles = d.items.map((it) => it.workout?.title).filter(Boolean).join(' + ')
+          // главная тренировка дня (самая длинная) + счётчик остальных
+          const main = [...d.items].sort((a, b) => b.minutes - a.minutes)[0]
+          const titles = main ? `${main.workout?.title || ''}${d.items.length > 1 ? ` +${d.items.length - 1}` : ''}` : ''
           return (
             <button class="cell" key={d.date} onClick={() => goDay(d.date)}>
-              <span class={`ahead-dow${dayIndex(d.date) === 0 ? ' is-week' : ''}`}>
+              <span class="ahead-dow">
                 {DAY_SHORT[dayIndex(d.date)]} {parse(d.date).getDate()}
               </span>
               <span class={`ahead-title${d.rest || d.outside ? ' is-off' : ''}`}>

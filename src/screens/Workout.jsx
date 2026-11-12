@@ -1,11 +1,12 @@
 import { ChevronLeft, ChevronRight } from 'lucide-preact'
 import {
-  DAY_SHORT, TIME_LABEL, ZONE_NAME, dayIndex, fmtHM, formula, getDay, keyZone, mainSegment, parse,
+  DAY_SHORT, TIME_LABEL, ZONE_NAME, dayIndex, fmtHM, formula, getDay, keyZone, parse,
   daysBetween, DAY_LONG,
 } from '../lib/plan'
 import { useSwipe } from '../lib/nav'
 import { Profile } from '../components/Profile'
-import { SportBadge } from '../components/SessionRow'
+import { DoneToggle, SportBadge } from '../components/SessionRow'
+import { useDoneVersion } from '../lib/done'
 import { neighborSession } from '../lib/plan'
 
 const openSession = (s) => s && location.replace(`#/d/${s.date}/${s.key}`)
@@ -19,6 +20,17 @@ function splitExercise(s) {
   return m ? [m[1], m[2]] : [s, '']
 }
 
+// Разгрузка: подсказываем, что именно убрать, а не только «меньше минут».
+function deloadHint(w) {
+  const block = (w.segments || []).find((s) => !Array.isArray(s))
+  if (block && block.x > 1) {
+    const n = Math.max(1, Math.floor(block.x * 0.7))
+    return `Разгрузка: ${n} ${n === 1 ? 'повтор' : n < 5 ? 'повтора' : 'повторов'} вместо ${block.x}, разминка и заминка как есть`
+  }
+  if (w.sport === 'strength' || w.sport === 'plyo') return 'Разгрузка: на один подход меньше в каждом упражнении, вес тот же'
+  return 'Разгрузка: основная часть на треть короче, интенсивность та же'
+}
+
 export function Workout({ date, idx, athlete, todayDate }) {
   const day = getDay(date, athlete)
   const item = day.items.find((it) => it.key === idx)
@@ -26,6 +38,7 @@ export function Workout({ date, idx, athlete, todayDate }) {
   const prev = item && neighborSession(date, idx, athlete, -1)
   const next = item && neighborSession(date, idx, athlete, 1)
   const swipe = useSwipe(() => openSession(next), () => openSession(prev))
+  useDoneVersion()
 
   const nav = (
     <div class="nav">
@@ -47,7 +60,14 @@ export function Workout({ date, idx, athlete, todayDate }) {
   const exercises = w.main && w.main.includes(' · ') ? w.main.split(' · ').map((s) => splitExercise(s.trim())) : null
   const deload = day.scale && day.scale !== 1
   const sub = [item.together ? 'Общая' : 'Личная', TIME_LABEL[item.time]].filter(Boolean).join(' · ')
-  const mainValue = formula(w) || (exercises ? `${exercises.length} упр.` : mainSegment(w))
+
+  // Колонки статистики: только осмысленные. Для сноуборда и мобилити — одно время.
+  const simple = w.sport === 'alt' || w.sport === 'mobility'
+  const brick = w.split ? `${fmtHM(w.split.bike)} → ${fmtHM(w.split.run)}` : null
+  const mainCol = brick || formula(w) || (exercises ? `${exercises.length} упр.` : null)
+  const stats = [['Время', fmtHM(item.minutes), deload ? '−30% · разгрузка' : null]]
+  if (!simple && mainCol) stats.push(['Основная', mainCol])
+  if (!simple) stats.push(['Зона', <><span class={`dot bg-${zone}`} />{ZONE_NAME[zone]}</>])
 
   return (
     <main key={`${date}/${idx}`} {...swipe} style="touch-action:pan-y">
@@ -59,20 +79,17 @@ export function Workout({ date, idx, athlete, todayDate }) {
       </div>
       <p class="wo-sub">{sub}</p>
 
-      <dl class="card stats">
-        <div>
-          <dt>Время</dt>
-          <dd class="num">{fmtHM(item.minutes)}{deload && <span class="was">было {fmtHM(w.minutes)}</span>}</dd>
-        </div>
-        <div>
-          <dt>Основная</dt>
-          <dd class="num">{mainValue}</dd>
-        </div>
-        <div>
-          <dt>Зона</dt>
-          <dd><span class={`dot bg-${zone}`} />{ZONE_NAME[zone]}</dd>
-        </div>
+      <dl class={`card stats cols-${stats.length}`}>
+        {stats.map(([label, value, extra]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd class="num">{value}</dd>
+            {extra && <dd class="stats-extra">{extra}</dd>}
+          </div>
+        ))}
       </dl>
+
+      {deload && <p class="deload-note">{deloadHint(w)}</p>}
 
       <div class="card chart">
         <Profile segments={w.segments} />
@@ -120,6 +137,10 @@ export function Workout({ date, idx, athlete, todayDate }) {
           </div>
         </>
       )}
+
+      <div class="card done-card">
+        <DoneToggle athlete={athlete} date={date} item={item} large />
+      </div>
 
       {(prev || next) && (
         <nav class="pager">

@@ -1,8 +1,8 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { ChevronLeft, ChevronRight, Flag } from 'lucide-preact'
 import {
-  ATHLETES, fmtHM, hoursScale, parse, phaseSummary, plan, seasonSummary, weeklySeries, weeksToRace,
-  MONTHS_GEN, MONTHS_SHORT,
+  ATHLETES, addDays, dayIndex, fmtHM, getDay, hoursScale, parse, phaseSummary, plan, seasonSummary, weeklySeries,
+  weeksToRace, MONTHS_GEN, MONTHS_SHORT,
 } from '../lib/plan'
 import './plan.css'
 
@@ -37,8 +37,32 @@ const shortRange = (a, b) => {
 const lower = (s) => (/^[А-ЯЁ]/.test(s) ? s[0].toLowerCase() + s.slice(1) : s)
 const hours = (m) => String(Math.round((m / 60) * 10) / 10).replace('.', ',')
 
+/**
+ * Тап по неделе → тренировочный день, а не выходной понедельник.
+ * Текущая неделя — «Сегодня». Иначе тот же день недели, что сегодня;
+ * если он выходной или пустой у атлета — первый день этой недели с тренировками.
+ */
+function weekHref(w, athlete, todayDate) {
+  if (w.isCurrent) return '#/'
+  const same = addDays(w.start, dayIndex(todayDate))
+  const trains = (date) => getDay(date, athlete).items.length > 0
+  if (trains(same)) return `#/day/${same}`
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(w.start, i)
+    if (trains(d)) return `#/day/${d}`
+  }
+  return `#/day/${same}`
+}
+
+/**
+ * Цель доли Z1–2 в кардио по фазе: база ≥ 85%, build ≈ 80%, специфика 70–75% (гоночная Z3 законна),
+ * подводка 85%. Ключ — префикс id фазы (base2, build-1 …), иначе 80.
+ */
+const EASY_TARGETS = [['base', 85], ['build', 80], ['spec', 75], ['taper', 85]]
+const easyTarget = (phaseId) => EASY_TARGETS.find(([p]) => String(phaseId ?? '').startsWith(p))?.[1] ?? 80
+
 // ───── «Нагрузка»: настройки видов ─────
-const N = 36
+const N = plan.weeks.length // одна колонка на неделю календаря
 const VIEWS = [
   ['volume', 'Объём'],
   ['zones', 'Зоны'],
@@ -69,7 +93,7 @@ const saveView = (v) => {
   try { localStorage.setItem(VIEW_KEY, v) } catch { /* приватный режим */ }
 }
 
-// Положение колонки i на сетке repeat(36, 1fr) с column-gap 2px: шаг = (100% + 2px) / 36
+// Положение колонки i на сетке repeat(N, 1fr) с column-gap 2px: шаг = (100% + 2px) / N
 const colLeft = (i, shift = 0) => `calc((100% + 2px) * ${i} / ${N}${shift ? ` - ${shift}px` : ''})`
 const colWidth = (n, minus = 2) => `calc((100% + 2px) * ${n} / ${N} - ${minus}px)`
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v))
@@ -115,8 +139,8 @@ function readout(w, view) {
     return {
       line1,
       value: `${pct}%`,
-      unit: `лёгкой · ${fmtHM(w.cardio)} кардио`,
-      line3: ZONES.map(([k, label]) => `${label} ${fmtHM(w.byZone[k])}`).join(' · '),
+      unit: `лёгкой · цель ${easyTarget(w.phaseId)}%`,
+      line3: [`${fmtHM(w.cardio)} кардио`, ...ZONES.map(([k, label]) => `${label} ${fmtHM(w.byZone[k])}`)].join(' · '),
     }
   }
   if (view === 'sport') {
@@ -145,7 +169,7 @@ function barOf(w, view, max) {
   return { h: (w.total / max) * 100, segs: [['v', w.total, w.isCurrent ? 'var(--accent)' : 'var(--label-2)']] }
 }
 
-function LoadCard({ series, scale, season, todayDate }) {
+function LoadCard({ series, scale, season, todayDate, hrefs }) {
   const [view, setViewState] = useState(loadView)
   const [sel, setSel] = useState(null) // null — текущая неделя
   const barsRef = useRef()
@@ -165,7 +189,7 @@ function LoadCard({ series, scale, season, todayDate }) {
   const w = series[selIdx]
   const r = readout(w, view)
   const valueText = `${r.line1}. ${r.value} ${r.unit}. ${r.line3}`
-  const href = w.isCurrent ? '#/' : `#/day/${w.start}`
+  const href = hrefs[selIdx]
   const line1 = fitText(line1Variants(w), r1Ref.current, r1W)
 
   // фазы → полосы
@@ -265,7 +289,7 @@ function LoadCard({ series, scale, season, todayDate }) {
 
   const desc =
     view === 'zones'
-      ? `Доля лёгкой работы Z1–2 в кардио по неделям. За сезон ${season.easyPct}%, цель 80%.`
+      ? `Доля лёгкой работы Z1–2 в кардио по неделям. За сезон ${season.easyPct}%. Цель по фазам: ${phases.map((p) => `${lower(p.title)} ${easyTarget(p.id)}%`).join(', ')}.`
       : view === 'sport'
         ? `Часы по видам спорта за сезон: ${SPORTS.map(([k, label]) => `${label} ${Math.round(series.reduce((a, s) => a + s.bySport[k], 0) / 60)} ч`).join(', ')}.`
         : `Часы тренировок по неделям, без гонки и сноуборда. Пик ${fmtHM(season.peak.min)} на неделе ${season.peak.n}.`
@@ -325,12 +349,11 @@ function LoadCard({ series, scale, season, todayDate }) {
             {ticks.slice(1).map(([y]) => (
               <span key={`g-${y}`} class="ld-grid" style={{ bottom: `${y}%` }} />
             ))}
-            {view === 'zones' && <span class="ld-goal" style={{ bottom: '80%' }} />}
             {curIdx >= 0 && <span class="ld-tint is-now" style={{ left: colLeft(curIdx, 1), width: colWidth(1, 0) }} />}
             {selIdx !== curIdx && <span class="ld-tint is-sel" style={{ left: colLeft(selIdx, 1), width: colWidth(1, 0) }} />}
           </div>
 
-          <div class="ld-bars" ref={barsRef} aria-hidden="true">
+          <div class="ld-bars" ref={barsRef} aria-hidden="true" style={{ '--n': N }}>
             {series.map((s) => {
               const b = barOf(s, view, scale.max)
               return (
@@ -343,11 +366,20 @@ function LoadCard({ series, scale, season, todayDate }) {
             })}
           </div>
 
+          {/* цель по фазе — поверх столбцов: в «Зонах» они во всю высоту */}
+          {view === 'zones' && (
+            <div class="ld-layer" aria-hidden="true">
+              {phases.map((p) => (
+                <span key={`t-${p.id}`} class="ld-goal" style={{ left: colLeft(p.i, 1), width: colWidth(p.n, 0), bottom: `${easyTarget(p.id)}%` }} />
+              ))}
+            </div>
+          )}
+
           <div class="ld-y" aria-hidden="true">
             {ticks.map(([y, label]) => (
               <span key={`y-${y}`} style={{ bottom: `${y}%` }}>{label}</span>
             ))}
-            {view === 'zones' && <span class="is-goal" style={{ bottom: '80%' }}>80%</span>}
+            {view === 'zones' && <span class="is-goal" style={{ bottom: `${easyTarget(w.phaseId)}%` }}>{easyTarget(w.phaseId)}%</span>}
           </div>
         </div>
 
@@ -380,7 +412,7 @@ function LoadCard({ series, scale, season, todayDate }) {
               {ZONES.map(([k, label, word, c]) => (
                 <span key={k} class="ld-lg"><i class="ld-sw" style={{ background: c }} />{label} {word}</span>
               ))}
-              <span class="ld-lg"><i class="ld-sw-dash" />цель 80/20</span>
+              <span class="ld-lg"><i class="ld-sw-dash" />цель по фазе</span>
             </>
           )}
           {view === 'sport' &&
@@ -401,12 +433,14 @@ function LoadCard({ series, scale, season, todayDate }) {
 
 const LONG_LABEL = { bike: 'длинный вел', run: 'длинный бег', brick: 'длинный брик', swim: 'длинное плавание' }
 
-function Tiles({ season }) {
+function Tiles({ season, nowPhase }) {
   const { peak, remainingMin, easyPct, longest } = season
   const tiles = [
     ['Пик недели', fmtHM(peak.min), `неделя ${peak.n} · ${lower(peak.phaseTitle)}`],
     ['До старта', `${Math.round(remainingMin / 60)} ч`, 'по плану, без гонки'],
-    ['Лёгкая работа', `${easyPct}%`, 'Z1–2 за сезон · цель 80%'],
+    nowPhase
+      ? ['Лёгкая работа сейчас', `${nowPhase.easyPct}%`, `${lower(nowPhase.title)} · цель ${easyTarget(nowPhase.id)}%`]
+      : ['Лёгкая работа', `${easyPct}%`, 'Z1–2 за сезон · цель 80%'],
     [
       'Самая длинная',
       fmtHM(longest.min),
@@ -441,20 +475,31 @@ export function Plan({ athlete, todayDate }) {
   const season = useMemo(() => seasonSummary(series, athlete, todayDate), [series, athlete, todayDate])
   const phaseSums = useMemo(() => phaseSummary(series), [series])
   const currentPhaseId = series.find((w) => w.isCurrent)?.phaseId ?? null
+  const hrefs = useMemo(() => series.map((w) => weekHref(w, athlete, todayDate)), [series, athlete, todayDate])
+  // фаза для плитки «Лёгкая работа сейчас»: текущая; до плана — первая, после старта — последняя
+  const nowPhase =
+    phaseSums.find((p) => p.id === currentPhaseId) ??
+    (phaseSums.length ? (todayDate < series[0].start ? phaseSums[0] : phaseSums[phaseSums.length - 1]) : null)
 
   const groups = phaseSums.map((ph) => ({ ph, weeks: series.filter((w) => w.phaseId === ph.id) }))
   const draftNoteAt = groups.find((g) => g.weeks.some((w) => w.draft))?.ph.id
   const lastPhase = groups[groups.length - 1]?.ph.id
 
   const weekCell = (w) => {
-    const tag = w.trip ? w.trip.title : w.kind === 'deload' ? '−30%' : null
+    const deload = w.kind === 'deload'
     const cls = ['cell', 'pl-wk', w.isCurrent && 'is-now', w.draft && 'is-draft'].filter(Boolean).join(' ')
     return [
-      <a key={w.start} class={cls} href={w.isCurrent ? '#/' : `#/day/${w.start}`} aria-current={w.isCurrent ? 'date' : undefined}>
+      <a key={w.start} class={cls} href={hrefs[w.n - 1]} aria-current={w.isCurrent ? 'date' : undefined}>
         <span class="pl-n">{w.n}</span>
         <span class="pl-when">
           <span class="pl-date">{shortDate(w.start)}</span>
-          {tag && <span class={`pl-tag${w.trip ? ' is-trip' : ''}`}>{tag}</span>}
+          {(w.trip || deload) && (
+            <span class="pl-tag">
+              {w.trip && <span class="is-trip">{w.trip.title}</span>}
+              {w.trip && deload && ' · '}
+              {deload && '−30%'}
+            </span>
+          )}
         </span>
         <span class="pl-total">{fmtHM(w.total)}</span>
         <ChevronRight class="chev" size={18} strokeWidth={2} />
@@ -479,27 +524,28 @@ export function Plan({ athlete, todayDate }) {
 
       <div class="title-block pl-title">
         <h1 class="large-title">План</h1>
-        <p class="subtitle num">
-          {n} {nWord} до {raceName} · {race.getDate()} {MONTHS_GEN[race.getMonth()]} {race.getFullYear()}
-          {plan.race.tentative && ' · ориентир'}
-        </p>
       </div>
 
       <section class="card pl-hero">
         <div class="pl-hero-line">
           <span class="pl-hero-num">{n}</span>
-          <span class="pl-hero-label">{nWord} до старта</span>
+          <span class="pl-hero-label">{nWord} до {raceName}</span>
         </div>
-        {plan.race.distances && <p class="pl-hero-dist">{plan.race.distances}</p>}
+        <p class="pl-hero-date num">
+          {race.getDate()} {MONTHS_GEN[race.getMonth()]} {race.getFullYear()}
+          {plan.race.tentative && ' · ориентир'}
+        </p>
       </section>
 
       <h2 class="section-title">Нагрузка</h2>
-      <LoadCard series={series} scale={scale} season={season} todayDate={todayDate} />
-      <Tiles season={season} />
+      <LoadCard series={series} scale={scale} season={season} todayDate={todayDate} hrefs={hrefs} />
+      <Tiles season={season} nowPhase={nowPhase} />
 
       <section aria-label="Сезон">
         {groups.map(({ ph, weeks: ws }) => {
           const isCur = currentPhaseId === ph.id
+          const deloads = ws.filter((w) => w.kind === 'deload').length
+          const peak = Math.max(0, ...ws.map((w) => w.total))
           return (
             <div key={ph.id} class="pl-phase">
               <h2 class="section-title pl-ph-title">
@@ -507,18 +553,27 @@ export function Plan({ athlete, todayDate }) {
                 {isCur && <span class="pl-now">Сейчас</span>}
               </h2>
               <p class="footnote pl-ph-range num">
-                {shortRange(ph.start, ph.end)} · {ph.weeks} {plural(ph.weeks, 'неделя', 'недели', 'недель')} · в среднем {fmtHM(ph.avgMin)} · {ph.easyPct}% лёгкой
+                {shortRange(ph.start, ph.end)} · {ph.weeks} нед · ⌀ {fmtHM(ph.avgMin)} · {ph.easyPct}% Z1–2
               </p>
               <details class="card list pl-weeks" open={isCur}>
                 <summary class="cell pl-wk pl-sum">
-                  <span class="pl-sum-title">{ph.weeks} {plural(ph.weeks, 'неделя', 'недели', 'недель')}</span>
+                  <span class="pl-sum-title num">
+                    {ph.weeks} {plural(ph.weeks, 'неделя', 'недели', 'недель')}
+                    <span class="pl-sum-meta">
+                      {deloads > 0 && ` · ${deloads} ${plural(deloads, 'разгрузка', 'разгрузки', 'разгрузок')}`}
+                      {peak > 0 && ` · пик ${fmtHM(peak)}`}
+                    </span>
+                  </span>
                   <ChevronRight class="chev pl-sum-chev" size={18} strokeWidth={2} />
                 </summary>
                 {ws.flatMap(weekCell)}
                 {ph.id === lastPhase && (
                   <div class="cell pl-wk pl-race">
                     <span class="pl-n"><Flag size={15} strokeWidth={2} /></span>
-                    <span class="pl-race-text num">{raceName} · {shortDate(plan.race.date)}</span>
+                    <span class="pl-race-text num">
+                      {raceName} · {shortDate(plan.race.date)}
+                      {plan.race.distances && <span class="pl-race-dist">{plan.race.distances}</span>}
+                    </span>
                   </div>
                 )}
               </details>
