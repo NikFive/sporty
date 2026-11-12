@@ -207,6 +207,18 @@ function semanticChecks() {
     for (const a of Object.keys(w.notes ?? {}))
       if (!ATHLETES.includes(a)) err('workouts', `workouts.${wid}.notes.${a}`, `атлет «${a}» не найден в settings.yaml.`)
 
+  // ── workouts: split (вел/бег) — только у brick, сумма = длительность по segments ──
+  const segMinutes = (list) =>
+    list.reduce((a, s) => a + (Array.isArray(s) ? s[0] : s.x * segMinutes(s.set)), 0)
+  for (const [wid, w] of Object.entries(workouts)) {
+    if (!w.split) continue
+    if (w.sport !== 'brick') err('workouts', `workouts.${wid}.split`, `split бывает только у sport: brick, а здесь sport: ${w.sport}.`)
+    const total = segMinutes(w.segments)
+    const sum = w.split.bike + w.split.run
+    if (Math.abs(sum - total) > 0.01)
+      err('workouts', `workouts.${wid}.split`, `bike + run = ${sum} мин, а по segments ${Math.round(total * 100) / 100} мин — должно совпадать.`)
+  }
+
   // ── templates: 7 дней, ровно один rest = restDay ──
   for (const [tid, t] of Object.entries(templates)) {
     for (const key of DAY_KEYS) checkDaySpec('templates', t.days[key], `templates.${tid}.days.${key}`)

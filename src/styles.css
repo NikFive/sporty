@@ -30,6 +30,11 @@
   --mob: #636366;
   --alt: #64d2ff;
 
+  /* виды спорта — для графика «Виды спорта» */
+  --swim: #64d2ff;
+  --bike: #ff9f0a;
+  --run: #ff375f;
+
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, sans-serif;
   --r-card: 22px;
   --r-ctl: 12px;
@@ -117,6 +122,9 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
   transition: background-color .2s var(--ease), color .2s var(--ease);
 }
 .seg button.on { background: rgba(255, 255, 255, 0.2); color: var(--label); font-weight: 600; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18); }
+/* .seg-fill — на всю ширину, сегменты поровну */
+.seg.seg-fill { display: flex; width: 100%; }
+.seg-fill button { flex: 1; min-width: 0; padding: 0 6px; font-size: 13px; font-weight: 600; text-align: center; white-space: nowrap; }
 .count { color: var(--label); }
 .count .lucide { color: var(--label-2); }
 

@@ -1,6 +1,8 @@
 /* ───── План: iOS inset grouped ───── */
 .plan { min-width: 0; padding-bottom: 32px; }
 .plan .num,
+.ld,
+.pl-tiles,
 .pl-n,
 .pl-date,
 .pl-total,
@@ -30,15 +32,6 @@
 .pl-hero-label { font-size: 20px; line-height: 24px; font-weight: 600; }
 .pl-hero-dist { margin-top: 8px; font-size: 15px; line-height: 20px; color: var(--label-2); }
 
-/* ───── эта неделя ───── */
-.pl-split { padding: 16px; }
-.pl-split-bar {
-  display: flex; height: 8px; border-radius: 4px; overflow: hidden;
-  background: var(--separator);
-}
-.pl-split-bar > span { height: 100%; }
-.pl-split-line { margin-top: 12px; font-size: 15px; line-height: 20px; color: var(--label-2); }
-
 /* ───── сезон: фазы ───── */
 .pl-ph-title { display: flex; align-items: center; gap: 8px; margin-bottom: 0; }
 .pl-now {
@@ -46,7 +39,7 @@
   font-size: 13px; font-weight: 600; color: var(--accent);
   background: rgba(10, 132, 255, 0.18);
 }
-.pl-ph-range { margin: 0 4px 8px; }
+.pl-ph-range { margin: 2px 4px 8px; }
 
 /* ───── сезон: недели ───── */
 .pl-weeks .cell + .cell::before { left: 50px; }
@@ -56,7 +49,7 @@
   font-size: 15px; color: var(--label-3);
 }
 .pl-when {
-  flex: none; width: 124px; min-width: 0;
+  flex: 1; min-width: 0;
   display: flex; align-items: baseline; gap: 6px;
   white-space: nowrap;
 }
@@ -68,12 +61,15 @@
 }
 .pl-tag.is-trip { color: var(--alt); }
 
-.pl-track { flex: 1; min-width: 0; display: flex; align-items: center; height: 6px; }
-.pl-fill { display: flex; height: 6px; border-radius: 3px; overflow: hidden; }
-.pl-fill .pl-seg { height: 100%; }
-.pl-wk.is-draft .pl-fill { opacity: 0.45; }
+.pl-total { flex: none; width: 48px; text-align: right; font-size: 15px; color: var(--label-2); }
+.pl-wk.is-draft .pl-total { color: var(--label-3); }
 
-.pl-total { flex: none; width: 44px; text-align: right; font-size: 15px; color: var(--label-2); }
+/* фаза — свёрнутый список: одна строка «16 недель» */
+.pl-sum { list-style: none; cursor: pointer; }
+.pl-sum::-webkit-details-marker { display: none; }
+.pl-sum-title { flex: 1; min-width: 0; font-size: 17px; line-height: 22px; }
+.pl-sum-chev { transition: transform .2s var(--ease); }
+.pl-weeks[open] .pl-sum-chev { transform: rotate(90deg); }
 
 /* вехи и финиш — строки без ссылки */
 .pl-ms:active,
@@ -107,3 +103,102 @@
 .pl-pr { align-items: flex-start; min-height: 0; padding: 12px 14px; }
 .pl-pr-text { white-space: normal; overflow: visible; margin-top: 2px; }
 .pl-pr-ref { display: block; margin-top: 4px; font-size: 13px; line-height: 18px; color: var(--label-3); }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ───── «Нагрузка»: график недель ───── */
+.ld { padding: 16px; }
+
+/* readout вместо тултипа: 18 + 34 + 18 = 70 */
+.ld-readout { display: block; height: 70px; margin-top: 12px; color: var(--label-2); }
+.ld-readout:active { opacity: 0.6; }
+.ld-r1 { display: flex; align-items: center; gap: 2px; height: 18px; font-size: 13px; line-height: 18px; }
+.ld-r1-text { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ld-r1-chev { flex: none; color: var(--label-3); }
+.ld-r2 { display: flex; align-items: baseline; gap: 6px; height: 34px; white-space: nowrap; overflow: hidden; }
+.ld-val { font-size: 28px; line-height: 34px; font-weight: 600; color: var(--label); }
+.ld-unit { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 15px; line-height: 20px; }
+.ld-r3 { display: block; height: 18px; font-size: 13px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* тело графика: справа 26px под подписи шкалы */
+.ld-body { margin-top: 8px; margin-right: 26px; }
+.ld-phases { position: relative; height: 16px; }
+.ld-ph {
+  position: absolute; top: 0; padding-left: 1px;
+  font-size: 11px; line-height: 16px; color: var(--label-2);
+  white-space: nowrap; overflow: hidden;
+}
+.ld-ph.is-hidden { visibility: hidden; }
+
+.ld-plot {
+  position: relative; height: 140px;
+  touch-action: pan-y; cursor: pointer; user-select: none; -webkit-user-select: none;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18); /* базовая линия */
+}
+.ld-plot:focus-visible { outline-offset: 4px; }
+.ld-layer { position: absolute; inset: 0; pointer-events: none; }
+.ld-band { position: absolute; top: 0; bottom: 0; background: rgba(255, 255, 255, 0.035); }
+.ld-hair { position: absolute; top: 0; bottom: 0; width: 0.5px; background: var(--separator); }
+.ld-grid { position: absolute; left: 0; right: 0; height: 0.5px; background: var(--separator); transform: translateY(0.25px); }
+.ld-goal { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed rgba(255, 255, 255, 0.45); transform: translateY(0.5px); }
+.ld-tint { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+.ld-tint.is-now { background: rgba(10, 132, 255, 0.16); }
+.ld-tint.is-sel { background: rgba(255, 255, 255, 0.10); }
+
+.ld-bars {
+  position: relative; height: 100%;
+  display: grid; grid-template-columns: repeat(36, 1fr); column-gap: 2px; align-items: end;
+  pointer-events: none;
+}
+.ld-bar {
+  display: flex; flex-direction: column-reverse; gap: 1px; min-width: 0;
+  border-radius: 2px 2px 0 0; overflow: hidden;
+  transition: height .25s var(--ease);
+}
+.ld-bar > span { flex: 1 1 0; min-height: 0; transition: flex-grow .25s var(--ease); }
+.ld-bar.is-draft { opacity: 0.5; }
+
+.ld-y { position: absolute; top: 0; bottom: 0; left: 100%; width: 26px; pointer-events: none; }
+.ld-y span {
+  position: absolute; left: 4px; transform: translateY(50%);
+  font-size: 11px; line-height: 13px; color: var(--label-3); white-space: nowrap;
+}
+.ld-y .is-goal { color: var(--label-2); }
+
+/* события под базовой линией */
+.ld-events { position: relative; height: 10px; margin-top: 4px; }
+.ld-cell { position: absolute; top: 0; height: 10px; display: flex; align-items: center; justify-content: center; }
+.ld-now { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.ld-trip { position: absolute; top: 3.5px; height: 3px; border-radius: 1.5px; background: var(--label-2); }
+.ld-race { position: absolute; top: 0; height: 10px; display: flex; color: var(--z4); }
+
+.ld-months { position: relative; height: 16px; }
+.ld-months span { position: absolute; top: 0; font-size: 11px; line-height: 16px; color: var(--label-3); white-space: nowrap; }
+
+/* легенда: текст всегда в цветах текста, не серии */
+.ld-legend { margin-top: 12px; display: grid; gap: 4px; }
+.ld-lg-row { display: flex; flex-wrap: wrap; gap: 2px 12px; }
+/* первая строка — до двух строк в любом виде, чтобы карточка не прыгала при переключении */
+.ld-lg-row:first-child { min-height: 38px; align-content: flex-start; }
+.ld-lg { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; line-height: 18px; color: var(--label-2); white-space: nowrap; }
+.ld-lg-row:first-child .ld-lg:only-child { white-space: normal; }
+.ld-sw { flex: none; width: 9px; height: 9px; border-radius: 2.5px; }
+.ld-sw.is-draft { background: var(--label-2); opacity: 0.5; }
+.ld-sw-dash { flex: none; width: 12px; height: 0; border-top: 1px dashed rgba(255, 255, 255, 0.45); }
+.ld-sw-now { flex: none; width: 5px; height: 5px; margin: 0 2px; border-radius: 50%; background: var(--accent); }
+.ld-sw-trip { flex: none; width: 12px; height: 3px; border-radius: 1.5px; background: var(--label-2); }
+.ld-sw-race { flex: none; color: var(--z4); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ld-bar, .ld-bar > span { transition: none; }
+}
+
+/* ───── плитки сезона ───── */
+.pl-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.pl-tile { min-width: 0; padding: 12px 14px 14px; }
+.pl-tile-label { font-size: 13px; line-height: 18px; color: var(--label-2); }
+.pl-tile-value { margin-top: 2px; font-size: 28px; line-height: 34px; font-weight: 600; }
+.pl-tile-sub { margin-top: 2px; font-size: 13px; line-height: 18px; color: var(--label-3); }

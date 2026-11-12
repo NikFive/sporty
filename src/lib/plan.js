@@ -165,28 +165,59 @@ export function getWeek(monday, athlete) {
   return { monday, days, week: weekOf(monday), stats: weekStats(days) }
 }
 
+/**
+ * Минуты тренировки по видам спорта (для графика «Виды спорта»).
+ * brick делится по split: { bike, run } из YAML (минуты → доли), без поля — 75% / 25%.
+ * strength | plyo → strength; mobility | alt → other. race сюда не попадает — его считает weekStats отдельно.
+ */
+export function sportMinutes(workout, minutes) {
+  const out = { swim: 0, bike: 0, run: 0, strength: 0, other: 0 }
+  if (!workout || !minutes) return out
+  const s = workout.sport
+  if (s === 'swim' || s === 'bike' || s === 'run') out[s] = minutes
+  else if (s === 'brick') {
+    const sp = workout.split
+    const bikeShare = sp && sp.bike + sp.run > 0 ? sp.bike / (sp.bike + sp.run) : 0.75
+    out.bike = minutes * bikeShare
+    out.run = minutes - out.bike
+  } else if (s === 'strength' || s === 'plyo') out.strength = minutes
+  else out.other = minutes
+  return out
+}
+
 // Распределение минут по зонам — проверяем 80/20 прямо на данных плана.
+// Старт (sport: race) в объём не входит: его минуты — отдельно в raceMin.
 export function weekStats(days) {
   const z = { easy: 0, grey: 0, hard: 0, str: 0, other: 0 }
-  let total = 0, sessions = 0
+  const bySport = { swim: 0, bike: 0, run: 0, strength: 0, other: 0 }
+  let total = 0, sessions = 0, raceMin = 0
   for (const d of days)
     for (const it of d.items) {
       if (!it.workout) continue
-      sessions++
       const k = d.scale || 1
-      for (const [m, zone] of flatSegments(it.workout.segments)) {
+      const flat = flatSegments(it.workout.segments)
+      if (it.workout.sport === 'race') {
+        raceMin += flat.reduce((a, [m]) => a + m, 0) * k
+        continue
+      }
+      sessions++
+      let wMin = 0
+      for (const [m, zone] of flat) {
         const mm = m * k
         if (zone === 'alt') continue // сноуборд и т. п. — не тренировочный объём
-        total += mm
+        wMin += mm
         if (zone === 'z1' || zone === 'z2') z.easy += mm
         else if (zone === 'z3') z.grey += mm
         else if (zone === 'z4' || zone === 'z5') z.hard += mm
         else if (zone === 'str' || zone === 'plyo') z.str += mm
         else z.other += mm
       }
+      total += wMin
+      const sp = sportMinutes(it.workout, wMin)
+      for (const key in bySport) bySport[key] += sp[key]
     }
   const cardio = z.easy + z.grey + z.hard
-  return { ...z, total, sessions, cardio, easyPct: cardio ? Math.round((z.easy / cardio) * 100) : 0 }
+  return { ...z, total, sessions, cardio, easyPct: cardio ? Math.round((z.easy / cardio) * 100) : 0, raceMin, bySport }
 }
 
 export const weeksToRace = (date) => Math.max(0, Math.ceil(daysBetween(date, plan.race.date) / 7))
@@ -284,4 +315,116 @@ export function seasonWeeks(athlete) {
     const events = [...new Set(days.map((d) => d.event).filter(Boolean))]
     return { n: i + 1, start: w.start, kind: w.kind, template: plan.templates[w.template], phase: phaseOf(w.start), events, stats }
   })
+}
+
+// ── аналитика «Плана»: недели сезона, общая шкала, сводки ──
+
+const appliesToAthlete = (x, athlete) => !x.athletes?.length || x.athletes.includes(athlete)
+
+/**
+ * 36 недель для графика «Нагрузка». Объём — без старта и сноуборда, с разгрузкой ×0.7.
+ * delta — разница с прошлой неделей в минутах (у первой недели null).
+ */
+export function weeklySeries(athlete, todayDate = today()) {
+  const thisMonday = mondayOf(todayDate)
+  let prev = null
+  return plan.weeks.map((w, i) => {
+    const end = addDays(w.start, 6)
+    const { stats } = getWeek(w.start, athlete)
+    const phase = phaseOf(w.start)
+    const inWeek = (e) => e.start <= end && e.end >= w.start && appliesToAthlete(e, athlete)
+    const trip = plan.events.find((e) => e.kind === 'trip' && inWeek(e))
+    const row = {
+      n: i + 1,
+      start: w.start,
+      end,
+      phaseId: phase?.id ?? null,
+      phaseTitle: phase?.title ?? '',
+      kind: w.kind,
+      draft: !!plan.templates[w.template]?.draft,
+      trip: trip ? { id: trip.id, title: trip.title } : null,
+      race: plan.events.some((e) => e.kind === 'race' && inWeek(e)),
+      milestones: plan.milestones
+        .filter((m) => m.date >= w.start && m.date <= end && appliesToAthlete(m, athlete))
+        .map((m) => ({ date: m.date, title: m.title, tentative: !!m.tentative })),
+      isCurrent: w.start === thisMonday,
+      total: stats.total,
+      cardio: stats.cardio,
+      sessions: stats.sessions,
+      raceMin: stats.raceMin,
+      byZone: { z12: stats.easy, z3: stats.grey, z45: stats.hard, str: stats.str, other: stats.other },
+      bySport: stats.bySport,
+      delta: prev ? stats.total - prev.total : null,
+    }
+    prev = row
+    return row
+  })
+}
+
+/** Общая шкала часов для нескольких атлетов: максимум, округлённый вверх до 5 ч (300 мин). */
+export function hoursScale(...seriesLists) {
+  const top = Math.max(0, ...seriesLists.flat().map((w) => w.total))
+  const max = Math.max(300, Math.ceil(top / 300) * 300)
+  return { max, ticks: [0, max / 2, max] }
+}
+
+/** Сводка по фазам: недели, средний объём в неделю, доля Z1–2 в кардио. */
+export function phaseSummary(series) {
+  return plan.phases
+    .map((p) => {
+      const ws = series.filter((w) => w.phaseId === p.id)
+      const total = ws.reduce((a, w) => a + w.total, 0)
+      const cardio = ws.reduce((a, w) => a + w.cardio, 0)
+      const easy = ws.reduce((a, w) => a + w.byZone.z12, 0)
+      return {
+        id: p.id,
+        title: p.title,
+        start: p.start,
+        end: p.end,
+        weeks: ws.length,
+        avgMin: ws.length ? total / ws.length : 0,
+        easyPct: cardio ? Math.round((easy / cardio) * 100) : 0,
+      }
+    })
+    .filter((p) => p.weeks)
+}
+
+/**
+ * Сводка сезона для плиток.
+ * peak — самая объёмная неделя (при равенстве — первая);
+ * remainingMin — объём по плану с todayDate (включительно) до старта, без самого старта;
+ * easyPct — доля Z1–2 в кардио за весь сезон;
+ * longest — самая длинная тренировка (без старта и сноуборда), firstDate — первый раз в плане.
+ */
+export function seasonSummary(series, athlete, todayDate = today()) {
+  const peak = series.reduce((a, w) => (w.total > a.total ? w : a), series[0])
+  const thisMonday = mondayOf(todayDate)
+  let remainingMin = 0
+  for (const w of series) {
+    if (w.start > thisMonday) remainingMin += w.total
+    else if (w.start === thisMonday) {
+      const days = DAY_KEYS.map((_, i) => getDay(addDays(w.start, i), athlete)).filter((d) => d.date >= todayDate)
+      remainingMin += weekStats(days).total
+    }
+  }
+  const cardio = series.reduce((a, w) => a + w.cardio, 0)
+  const easy = series.reduce((a, w) => a + w.byZone.z12, 0)
+
+  let longest = { min: 0, workoutId: null, title: '', sport: null, firstDate: null }
+  for (const w of plan.weeks)
+    for (let i = 0; i < 7; i++) {
+      const d = getDay(addDays(w.start, i), athlete)
+      for (const it of d.items) {
+        if (!it.workout || it.workout.sport === 'race' || it.workout.sport === 'alt') continue
+        if (it.minutes > longest.min)
+          longest = { min: it.minutes, workoutId: it.workout.id, title: it.workout.title, sport: it.workout.sport, firstDate: d.date }
+      }
+    }
+
+  return {
+    peak: { min: peak?.total ?? 0, n: peak?.n ?? null, phaseTitle: peak?.phaseTitle ?? '' },
+    remainingMin,
+    easyPct: cardio ? Math.round((easy / cardio) * 100) : 0,
+    longest,
+  }
 }

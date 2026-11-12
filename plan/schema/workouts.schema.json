@@ -44,6 +44,16 @@
           "description": "Профиль тренировки для графика и статистики 80/20: список отрезков [минуты, зона] и повторов { x, set }. Сумма минут = длительность.",
           "$ref": "#/definitions/segmentList"
         },
+        "split": {
+          "description": "Только для brick: сколько минут из segments приходится на вел и на бег, например { bike: 140, run: 40 }. Сумма = длительность. Без поля — 75% вел / 25% бег.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bike", "run"],
+          "properties": {
+            "bike": { "description": "Минуты вела.", "type": "number", "minimum": 0 },
+            "run": { "description": "Минуты бега.", "type": "number", "minimum": 0 }
+          }
+        },
         "why": { "description": "Зачем эта тренировка — механизм простыми словами (мотивация).", "type": "string" },
         "ref": { "description": "Источник: автор и год, например «Seiler 2010».", "type": "string" },
         "notes": {
