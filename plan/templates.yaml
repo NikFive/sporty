@@ -13,7 +13,7 @@
 # Логика недели (время: будни — один заход в зал, выходные — до двух сессий):
 #   • будни: кардио + силовая в одном заходе — только когда кардио лёгкое (Z2). Тяжёлое кардио — отдельный день без силовой ног.
 #   • 80/20: 1–2 ключевые сессии в неделю, остальное Z1–Z2. Ключевые в базе — «норвежский» суб-порог (контроль, не на износ).
-#   • Никита: плечо (реконструкция AC) → этапы op → rtr → sh → полный план. Ваня всё это время идёт по обычной базе.
+#   • Никита: плечо (реконструкция AC) → этапы op (0–2 нед.) → rtr (полный бег) → sh (вода без гребка) → полный план. Ваня всё это время идёт по обычной базе.
 #   • Силовая Никиты: база — 3 (A ноги, B ноги, C верх/ЛФК); build/специфика — 2 (поддержка + верх) + плиометрика.
 
 templates:
@@ -52,41 +52,41 @@ templates:
       sat: { nikita: [walk_incline], vanya: [run_long_80] }
       sun: { nikita: [bike_easy_postop], vanya: [bike_long_120, run_off_bike] }
 
-  # ── 2–6 нед. после операции (декабрь): Никита — бег-шаг ступенями, вел, ноги тяжело, ЛФК.
+  # ── 2–6 нед. после операции (декабрь): Никита бегает полностью (длинный бег догоняет за 2 недели), вел, ноги тяжело, плиометрика, ЛФК. Верх — нет.
   base1_rtr_1:
     title: База I · возвращение 1
     days:
       mon: rest
-      tue: { nikita: [run_walk_return, strength_legs_a], vanya: [run_easy_strides, strength_min_a] }
+      tue: { together: [run_easy_strides], nikita: [strength_legs_a], vanya: [strength_min_a] }
       wed: { together: [bike_sub_4] }
-      thu: { nikita: [run_walk_return, strength_legs_b], vanya: [run_z2, strength_min_b] }
+      thu: { together: [run_z2], nikita: [plyo_a, strength_legs_b], vanya: [strength_min_b] }
       fri: { together: [bike_z2] }
-      sat: { nikita: [run_walk_long], vanya: [run_long_80] }
+      sat: { nikita: [run_long_70], vanya: [run_long_80] }
       sun: { together: [bike_long_110], vanya: [run_off_bike], nikita: [shoulder_rehab@pm] }
 
   base1_rtr_2:
     title: База I · возвращение 2
     days:
       mon: rest
-      tue: { nikita: [run_walk_return, strength_legs_a], vanya: [run_easy_strides, strength_min_a] }
+      tue: { together: [run_easy_strides], nikita: [strength_legs_a], vanya: [strength_min_a] }
       wed: { together: [bike_sub_5] }
-      thu: { nikita: [run_walk_return, strength_legs_b], vanya: [run_z2, strength_min_b] }
+      thu: { together: [run_z2], nikita: [plyo_a, strength_legs_b], vanya: [strength_min_b] }
       fri: { together: [bike_z2] }
-      sat: { nikita: [run_walk_long], vanya: [run_long_85] }
+      sat: { nikita: [run_long_80], vanya: [run_long_85] }
       sun: { together: [bike_long_120], vanya: [run_off_bike], nikita: [shoulder_rehab@pm] }
 
   base1_rtr_3:
     title: База I · возвращение 3
     days:
       mon: rest
-      tue: { nikita: [run_walk_return, strength_legs_a], vanya: [run_easy_strides, strength_min_a] }
+      tue: { together: [run_easy_strides], nikita: [strength_legs_a], vanya: [strength_min_a] }
       wed: { together: [bike_sub_6] }
-      thu: { nikita: [run_walk_return, strength_legs_b], vanya: [run_z2, strength_min_b] }
+      thu: { together: [run_z2], nikita: [plyo_a, strength_legs_b], vanya: [strength_min_b] }
       fri: { together: [bike_z2] }
-      sat: { nikita: [run_walk_long], vanya: [run_long_90] }
+      sat: { together: [run_long_90] }
       sun: { together: [bike_long_130], vanya: [run_off_bike], nikita: [shoulder_rehab@pm] }
 
-  # ── База II, 6–12 нед. после операции: бассейн. Ваня плавает, Никита — вода без гребка. Длинный бег у Никиты свой — догоняет после паузы.
+  # ── База II, 6–12 нед. после операции: бассейн. Ваня плавает, Никита — вода без гребка.
   base2_sh_1:
     title: База II · плечо 1
     days:
@@ -95,7 +95,7 @@ templates:
       wed: { together: [bike_vo2_4] }
       thu: { nikita: [swim_rehab], vanya: [swim_technique] }
       fri: { together: [bike_z2], nikita: [plyo_a, strength_legs_b], vanya: [strength_min_b] }
-      sat: { nikita: [run_long_60@am, swim_rehab@pm], vanya: [run_long_85@am, swim_aerobic@pm] }
+      sat: { together: [run_long_85@am], nikita: [swim_rehab@pm], vanya: [swim_aerobic@pm] }
       sun: { together: [bike_long_120, run_off_bike], nikita: [shoulder_rehab@pm] }
 
   base2_sh_2:
@@ -106,7 +106,7 @@ templates:
       wed: { together: [bike_vo2_5] }
       thu: { nikita: [swim_rehab], vanya: [swim_technique] }
       fri: { together: [bike_z2], nikita: [plyo_a, strength_legs_b], vanya: [strength_min_b] }
-      sat: { nikita: [run_long_70@am, swim_rehab@pm], vanya: [run_long_90@am, swim_aerobic@pm] }
+      sat: { together: [run_long_90@am], nikita: [swim_rehab@pm], vanya: [swim_aerobic@pm] }
       sun: { together: [bike_long_130, run_off_bike], nikita: [shoulder_rehab@pm] }
 
   base2_sh_3:
@@ -117,7 +117,7 @@ templates:
       wed: { together: [bike_vo2_6] }
       thu: { nikita: [swim_rehab], vanya: [swim_technique] }
       fri: { together: [bike_z2], nikita: [plyo_a, strength_legs_b], vanya: [strength_min_b] }
-      sat: { nikita: [run_long_75@am, swim_rehab@pm], vanya: [run_long_95@am, swim_aerobic@pm] }
+      sat: { together: [run_long_95@am], nikita: [swim_rehab@pm], vanya: [swim_aerobic@pm] }
       sun: { together: [bike_long_140, run_off_bike], nikita: [shoulder_rehab@pm] }
 
   base2_sh_4:
@@ -128,7 +128,7 @@ templates:
       wed: { together: [bike_vo2_4] }
       thu: { nikita: [swim_rehab], vanya: [swim_technique] }
       fri: { together: [bike_z2], nikita: [plyo_a, strength_legs_b], vanya: [strength_min_b] }
-      sat: { nikita: [run_long_80@am, swim_rehab@pm], vanya: [run_long_90@am, swim_aerobic@pm] }
+      sat: { together: [run_long_90@am], nikita: [swim_rehab@pm], vanya: [swim_aerobic@pm] }
       sun: { together: [bike_long_130, run_off_bike], nikita: [shoulder_rehab@pm] }
 
   # ── База II полная (с 15 фев): кроль и верх Никите — с допуском хирурга.
@@ -140,7 +140,7 @@ templates:
       wed: { together: [bike_vo2_5] }
       thu: { together: [swim_technique] }
       fri: { together: [bike_z2], nikita: [plyo_a, strength_full_b], vanya: [strength_min_b] }
-      sat: { together: [swim_aerobic@pm], nikita: [run_long_85@am], vanya: [run_long_95@am] }
+      sat: { together: [run_long_95@am, swim_aerobic@pm] }
       sun: { together: [bike_long_140, run_off_bike], nikita: [strength_upper_hyp@pm] }
 
   base2_2:
@@ -151,7 +151,7 @@ templates:
       wed: { together: [bike_vo2_6] }
       thu: { together: [swim_technique] }
       fri: { together: [bike_z2], nikita: [plyo_a, strength_full_b], vanya: [strength_min_b] }
-      sat: { together: [swim_aerobic@pm], nikita: [run_long_90@am], vanya: [run_long_100@am] }
+      sat: { together: [run_long_100@am, swim_aerobic@pm] }
       sun: { together: [bike_long_150, run_off_bike], nikita: [strength_upper_hyp@pm] }
 
   # ── Build (март — апрель): два блока по 3 недели, каждый следующий начинается чуть выше предыдущего.
