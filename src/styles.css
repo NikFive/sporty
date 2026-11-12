@@ -101,8 +101,13 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 /* ───── шапка ───── */
 .top {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding-top: calc(10px + env(safe-area-inset-top)); height: calc(56px + env(safe-area-inset-top));
+  padding-top: calc(24px + env(safe-area-inset-top)); height: calc(72px + env(safe-area-inset-top));
 }
+.who { display: inline-flex; align-items: center; gap: 2px; height: 44px; font-size: 20px; font-weight: 700; }
+.who-chev { color: var(--label-3); margin-top: 1px; }
+.who:active { opacity: 0.6; }
+.check { color: var(--accent); flex: none; }
+.rest-icon.is-medical { background: rgba(255, 69, 58, 0.18); color: #ff8a80; }
 .seg {
   display: inline-flex; padding: 2px; border-radius: 18px;
   background: var(--glass); box-shadow: var(--glass-hi), 0 0 0 0.5px var(--glass-border);
@@ -116,7 +121,7 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .count .lucide { color: var(--label-2); }
 
 /* ───── заголовок дня ───── */
-.title-block { margin: 12px 4px 16px; }
+.title-block { margin: 8px 4px 16px; }
 .large-title { font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: 0.01em; }
 .subtitle { font-size: 15px; line-height: 20px; color: var(--label-2); margin-top: 2px; }
 
@@ -197,21 +202,26 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .to-today:active { transform: translateX(-50%) scale(0.96); }
 
 /* ───── профиль зон (только на экране тренировки) ───── */
-.profile { display: flex; align-items: flex-end; gap: 2px; }
-.seg-bar { display: block; min-width: 3px; border-radius: 3px 3px 1px 1px; }
-.seg-z1 { background: var(--z1); }
-.seg-z2 { background: var(--z2); }
-.seg-z3 { background: var(--z3); }
-.seg-z4 { background: var(--z4); }
-.seg-z5 { background: var(--z5); }
-.seg-str { background: var(--str); }
-.seg-plyo { background: var(--plyo); }
-.seg-mob { background: var(--mob); }
-.seg-alt { background: var(--alt); }
-.profile-axis { display: flex; justify-content: space-between; font-size: 12px; color: var(--label-3); margin-top: 8px; }
+.pf-plot { position: relative; }
+.pf-grid { position: absolute; top: 0; bottom: 0; width: 0.5px; background: var(--separator); transform: translateX(-0.25px); }
+/* зазор 1px с каждой стороны рисуется рамкой, а не margin — координаты остаются точными */
+.pf-bar { position: absolute; bottom: 0; border-radius: 3px 3px 1px 1px; border-left: 1px solid transparent; border-right: 1px solid transparent; background-clip: padding-box; min-width: 2px; }
+.pf-axis { position: relative; height: 16px; margin-top: 8px; font-size: 12px; color: var(--label-3); }
+.pf-axis span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+.pf-axis .is-first { transform: none; }
+.pf-axis .is-last { transform: translateX(-100%); }
+.seg-z1 { background-color: var(--z1); }
+.seg-z2 { background-color: var(--z2); }
+.seg-z3 { background-color: var(--z3); }
+.seg-z4 { background-color: var(--z4); }
+.seg-z5 { background-color: var(--z5); }
+.seg-str { background-color: var(--str); }
+.seg-plyo { background-color: var(--plyo); }
+.seg-mob { background-color: var(--mob); }
+.seg-alt { background-color: var(--alt); }
 
 /* ───── экран тренировки ───── */
-.nav { display: flex; align-items: center; justify-content: space-between; padding-top: calc(6px + env(safe-area-inset-top)); height: calc(52px + env(safe-area-inset-top)); }
+.nav { display: flex; align-items: center; justify-content: space-between; padding-top: calc(20px + env(safe-area-inset-top)); height: calc(68px + env(safe-area-inset-top)); }
 .back { display: inline-flex; align-items: center; gap: 2px; height: 44px; margin-left: -8px; padding-right: 8px; color: var(--accent); font-size: 17px; }
 .nav-count { font-size: 15px; color: var(--label-2); }
 .wo-head { display: flex; align-items: center; gap: 14px; margin: 8px 4px 0; }
@@ -248,10 +258,11 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .pager-sub { font-size: 13px; color: var(--label-2); }
 
 /* ───── первый запуск ───── */
-.pick { max-width: 560px; margin: 0 auto; padding: calc(72px + env(safe-area-inset-top)) var(--pad) 40px; }
+.pick { max-width: 560px; margin: 0 auto; padding: calc(88px + env(safe-area-inset-top)) var(--pad) 40px; }
 .pick .large-title { margin: 0 4px 24px; }
 .pick .cell { min-height: 56px; }
-.pick .cell + .cell::before { left: 16px; }
+.pick .cell + .cell::before, .plain .cell + .cell::before { left: 16px; }
+.plain .cell { min-height: 52px; }
 .pick-name { flex: 1; font-size: 20px; font-weight: 600; }
 
 @media (prefers-reduced-motion: reduce) {

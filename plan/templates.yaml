@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=./schema/templates.schema.json
+# Шаблоны недели. Контракт и примеры — plan/README.md. Проверка: npm run validate
+#
+# Каждый день mon..sun: либо rest, либо { together: [...], nikita: [...], vanya: [...] }
+#   together — тренируемся вместе; nikita / vanya — личные модули.
+#   Ссылка: id тренировки из workouts.yaml; id@am — утро, id@pm — вечер (без суффикса — когда удобно).
+# В каждом шаблоне ровно один rest, и он совпадает с restDay из settings.yaml.
+# Силовую ставим минимум через 6 ч после интенсивного кардио.
+# draft: true — шаблон-черновик, UI помечает «детали могут поменяться».
+
+templates:
+  base1:
+    title: База I
+    days:
+      mon: rest
+      tue: { together: [run_easy_strides@am], nikita: [strength_full_a@pm], vanya: [strength_min_a@pm] }
+      wed: { together: [bike_vo2] }
+      thu: { together: [run_z2@am], nikita: [plyo_a@pm, strength_full_b@pm], vanya: [strength_min_b@pm] }
+      fri: { together: [bike_z2] }
+      sat: { together: [run_long_z2] }
+      sun: { together: [bike_long_z2] }
+
+  base2:
+    title: База II · бассейн
+    days:
+      mon: rest
+      tue: { together: [run_easy_strides@am], nikita: [strength_full_a@pm], vanya: [strength_min_a@pm] }
+      wed: { together: [bike_vo2] }
+      thu: { together: [swim_technique@am], nikita: [plyo_a@pm, strength_full_b@pm], vanya: [strength_min_b@pm] }
+      fri: { together: [swim_aerobic@am, run_z2@pm] }
+      sat: { together: [run_long_z2] }
+      sun: { together: [bike_long_z2] }
+
+  build:
+    title: Build
+    draft: true
+    days:
+      mon: rest
+      tue: { together: [run_threshold] }
+      wed: { together: [swim_technique@am], nikita: [strength_maint@pm], vanya: [strength_min_a@pm] }
+      thu: { together: [bike_threshold] }
+      fri: { together: [swim_css@am], nikita: [plyo_a@pm], vanya: [strength_min_b@pm] }
+      sat: { together: [bike_long_build] }
+      sun: { together: [run_long_build] }
+
+  spec:
+    title: Специфика
+    draft: true
+    days:
+      mon: rest
+      tue: { together: [run_race_pace] }
+      wed: { together: [swim_aerobic@am], nikita: [strength_maint@pm], vanya: [strength_min_a@pm] }
+      thu: { together: [bike_race_pace] }
+      fri: { together: [swim_css@am], nikita: [plyo_a@pm] }
+      sat: { together: [brick_long] }
+      sun: { together: [run_long_build] }
+
+  taper:
+    title: Подводка
+    draft: true
+    days:
+      mon: rest
+      tue: { together: [run_openers] }
+      wed: { together: [swim_short] }
+      thu: { together: [bike_openers] }
+      fri: { together: [swim_short] }
+      sat: { together: [run_openers] }
+      sun: { together: [bike_z2] }

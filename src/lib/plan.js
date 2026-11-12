@@ -1,4 +1,8 @@
-import raw from '../data/plan.yaml'
+// План — данные в plan/*.yaml (контракт: plan/README.md). Здесь только чтение и сборка.
+import settingsFile from '../../plan/settings.yaml'
+import workoutsFile from '../../plan/workouts.yaml'
+import templatesFile from '../../plan/templates.yaml'
+import calendarFile from '../../plan/calendar.yaml'
 
 // ── даты: всё в локальном времени, формат YYYY-MM-DD ──
 const pad = (n) => String(n).padStart(2, '0')
@@ -46,15 +50,22 @@ export const fmtMin = (m) => {
   return r ? `${h} ч ${r} мин` : `${h} ч`
 }
 
-// ── нормализация данных (YAML может отдать даты как Date) ──
+// ── сборка четырёх файлов в один объект + нормализация (YAML может отдать даты как Date) ──
 const norm = (v) => (v instanceof Date ? v.toISOString().slice(0, 10) : v)
+const raw = { ...settingsFile, ...workoutsFile, ...templatesFile, ...calendarFile }
 
 export const plan = {
   ...raw,
   race: { ...raw.race, date: norm(raw.race.date) },
   phases: raw.phases.map((p) => ({ ...p, start: norm(p.start), end: norm(p.end) })),
-  milestones: (raw.milestones || []).map((m) => ({ ...m, date: norm(m.date) })),
+  // athletes: [nikita] в YAML; athlete — единственный атлет (или undefined = для всех), как раньше
+  milestones: (raw.milestones || []).map((m) => ({
+    ...m,
+    date: norm(m.date),
+    athlete: m.athletes?.length === 1 ? m.athletes[0] : undefined,
+  })),
   events: (raw.events || []).map((e) => ({ ...e, start: norm(e.start), end: norm(e.end) })),
+  overrides: (raw.overrides || []).map((o) => ({ ...o, date: norm(o.date) })),
   weeks: raw.weeks.map((w) => ({ ...w, start: norm(w.start) })),
 }
 
@@ -98,29 +109,37 @@ export const weekOf = (date) => {
   const m = mondayOf(date)
   return plan.weeks.find((w) => w.start === m) || null
 }
-export const eventOf = (date) => plan.events.find((e) => date >= e.start && date <= e.end) || null
+// athletes: [...] не задан → касается всех; athlete не передан → любой
+const appliesTo = (x, athlete) => !athlete || !x.athletes?.length || x.athletes.includes(athlete)
+export const eventOf = (date, athlete) =>
+  plan.events.find((e) => date >= e.start && date <= e.end && appliesTo(e, athlete)) || null
+export const overrideOf = (date, athlete) => plan.overrides.find((o) => o.date === date && appliesTo(o, athlete)) || null
 export const weekNumber = (date) => {
   const i = plan.weeks.findIndex((w) => w.start === mondayOf(date))
   return i < 0 ? null : i + 1
 }
 
 /**
- * Что делать в этот день.
- * → { date, rest, outside, event, week, phase, template, items: [{ workout, together, key }] }
+ * Что делать в этот день. Приоритет: override > event.day > шаблон недели.
+ * → { date, rest, outside, event, override, week, phase, template, scale, items: [{ workout, together, key }] }
+ * event/override — только те, что касаются этого атлета (иначе null).
  */
 export function getDay(date, athlete) {
   const week = weekOf(date)
   const phase = phaseOf(date)
-  const event = eventOf(date)
-  const base = { date, week, phase, event, template: week ? plan.templates[week.template] : null }
+  const event = eventOf(date, athlete)
+  const override = overrideOf(date, athlete)
+  const base = { date, week, phase, event, override, template: week ? plan.templates[week.template] : null }
 
   let spec
-  if (event?.day) spec = event.day
+  if (override) spec = override.day
+  else if (event?.day) spec = event.day
   else if (!week) return { ...base, outside: true, rest: false, items: [] }
   else spec = base.template.days[DAY_KEYS[dayIndex(date)]]
 
   if (spec === 'rest' || spec == null) return { ...base, rest: true, items: [] }
 
+  // разгрузка ×0.7 — для дней по шаблону и overrides; дни событий атлета не масштабируются
   const scale = week?.kind === 'deload' && !event ? DELOAD_SCALE : 1
   const items = []
   for (const ref of spec.together || []) items.push({ ...parseRef(ref), together: true })

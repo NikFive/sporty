@@ -1,0 +1,128 @@
+# yaml-language-server: $schema=./schema/calendar.schema.json
+# Календарь: фазы, недели, события, вехи, точечные замены дней.
+# Контракт и примеры — plan/README.md. Проверка: npm run validate
+#
+# Как определяется день атлета (первое подходящее):
+#   1. overrides — тихая замена одной даты (без карточки в UI)
+#   2. events    — поездка / гонка / медицина с полем day (с карточкой события)
+#   3. шаблон недели из weeks (в разгрузочную неделю объём ×0.7)
+# athletes: [nikita] — только для этого атлета; без поля — для всех.
+# Даты — всегда в кавычках: "2026-11-23".
+
+phases:
+  - id: base
+    title: База
+    start: "2026-11-09"
+    end: "2027-02-28"
+    focus: Объём в Z2, силовая на силу. С января — техника плавания.
+  - id: build
+    title: Build
+    start: "2027-03-01"
+    end: "2027-05-30"
+    focus: Пороги, длинный вел, силовая на поддержку.
+  - id: spec
+    title: Специфика
+    start: "2027-05-31"
+    end: "2027-07-04"
+    focus: Темп гонки, длинные брики.
+  - id: taper
+    title: Подводка
+    start: "2027-07-05"
+    end: "2027-07-18"
+    focus: Объём вниз, острота остаётся.
+
+# Точки на таймлайне. Расписание НЕ меняют.
+milestones:
+  - date: "2026-11-23"
+    title: Операция Никиты
+    athletes: [nikita]
+    note: Без тренировок 22–25 ноября. Дальше — по самочувствию; если восстановление затянется, добавим отдельный блок.
+  - date: "2027-01-11"
+    title: Старт бассейна
+    note: Две сессии плавания в неделю, сначала техника.
+
+# Особые периоды с карточкой в UI. kind: trip | race | medical.
+# day — чем заменить каждый день периода: rest или { together, nikita, vanya }.
+# Без day — расписание по шаблону, но с карточкой события.
+events:
+  - id: surgery
+    title: Операция
+    kind: medical
+    athletes: [nikita]
+    start: "2026-11-22"
+    end: "2026-11-25"
+    note: Восстановление после операции. Возвращаемся по самочувствию, без интенсивности первые дни.
+    day: rest
+  - id: sheregesh
+    title: Шерегеш
+    kind: trip
+    start: "2027-01-01"
+    end: "2027-01-07"
+    note: Неделя альтернативной нагрузки. Катаемся, плюс короткая поддержка тела.
+    day:
+      together: [snowboard]
+      nikita: [mobility_short]
+      vanya: [mobility_short]
+  - id: race
+    title: Гонка
+    kind: race
+    start: "2027-07-18"
+    end: "2027-07-18"
+    day:
+      together: [race]
+  # Пример выездной недели (раскомментируй и поставь даты):
+  # - id: ski-feb
+  #   title: Горнолыжка
+  #   kind: trip
+  #   start: "2027-02-13"
+  #   end: "2027-02-20"
+  #   day:
+  #     together: [snowboard]
+
+# Тихая замена одного дня (без карточки в UI). Сильнее события и шаблона.
+# day: rest или { together, nikita, vanya } — ЦЕЛИКОМ заменяет день атлета.
+overrides: []
+  # - date: "2026-12-03"
+  #   athletes: [vanya]
+  #   day: rest
+  #   note: Перенос из-за работы
+
+# Неделя = понедельник, недели идут подряд без пропусков.
+# kind: deload — разгрузка (объём по шаблону ×0.7).
+weeks:
+  - { start: "2026-11-09", template: base1 }
+  - { start: "2026-11-16", template: base1 }
+  - { start: "2026-11-23", template: base1 }
+  - { start: "2026-11-30", template: base1, kind: deload }
+  - { start: "2026-12-07", template: base1 }
+  - { start: "2026-12-14", template: base1 }
+  - { start: "2026-12-21", template: base1 }
+  - { start: "2026-12-28", template: base1, kind: deload }
+  - { start: "2027-01-04", template: base2 }
+  - { start: "2027-01-11", template: base2 }
+  - { start: "2027-01-18", template: base2 }
+  - { start: "2027-01-25", template: base2, kind: deload }
+  - { start: "2027-02-01", template: base2 }
+  - { start: "2027-02-08", template: base2 }
+  - { start: "2027-02-15", template: base2 }
+  - { start: "2027-02-22", template: base2, kind: deload }
+  - { start: "2027-03-01", template: build }
+  - { start: "2027-03-08", template: build }
+  - { start: "2027-03-15", template: build }
+  - { start: "2027-03-22", template: build, kind: deload }
+  - { start: "2027-03-29", template: build }
+  - { start: "2027-04-05", template: build }
+  - { start: "2027-04-12", template: build }
+  - { start: "2027-04-19", template: build, kind: deload }
+  - { start: "2027-04-26", template: build }
+  - { start: "2027-05-03", template: build }
+  - { start: "2027-05-10", template: build }
+  - { start: "2027-05-17", template: build, kind: deload }
+  - { start: "2027-05-24", template: build }
+  - { start: "2027-05-31", template: spec }
+  - { start: "2027-06-07", template: spec }
+  - { start: "2027-06-14", template: spec }
+  - { start: "2027-06-21", template: spec, kind: deload }
+  - { start: "2027-06-28", template: spec }
+  - { start: "2027-07-05", template: taper }
+  - { start: "2027-07-12", template: taper }

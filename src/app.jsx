@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { ATHLETES, mondayOf, plan, today, weeksToRace } from './lib/plan'
 import { Day } from './screens/Day'
+import { Profile } from './screens/Profile'
 import { Plan } from './screens/Plan'
 import { Workout } from './screens/Workout'
 import { ChevronRight, Flag } from 'lucide-preact'
@@ -27,6 +28,7 @@ const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || '')
 function parseRoute(hash) {
   const p = hash.replace(/^#\/?/, '').split('/').filter(Boolean)
   if (p[0] === 'plan') return { view: 'plan' }
+  if (p[0] === 'me') return { view: 'me' }
   if (p[0] === 'd' && isDate(p[1])) return { view: 'workout', date: p[1], idx: Number(p[2]) || 0 }
   if ((p[0] === 'day' || p[0] === 'week') && isDate(p[1])) return { view: 'day', date: p[0] === 'week' ? mondayOf(p[1]) : p[1] }
   return { view: 'day', date: null }
@@ -109,6 +111,7 @@ export function App() {
 
   let screen
   if (route.view === 'plan') screen = <Plan athlete={athlete} todayDate={now} />
+  else if (route.view === 'me') screen = <Profile athlete={athlete} onPick={pick} />
   else if (route.view === 'workout') screen = <Workout date={route.date} idx={route.idx} athlete={athlete} todayDate={now} />
   else screen = <Day date={route.date || now} athlete={athlete} todayDate={now} dir={route.dir} />
 
@@ -116,13 +119,10 @@ export function App() {
     <div class="app">
       {route.view === 'day' && (
         <header class="top">
-          <div class="seg" role="tablist" aria-label="Атлет">
-            {ATHLETES.map((a) => (
-              <button key={a} role="tab" aria-selected={a === athlete} class={a === athlete ? 'on' : ''} onClick={() => pick(a)}>
-                {plan.athletes[a].name}
-              </button>
-            ))}
-          </div>
+          <a class="who" href="#/me" aria-label="Профиль">
+            <span>{plan.athletes[athlete].name}</span>
+            <ChevronRight size={20} strokeWidth={2.5} class="who-chev" />
+          </a>
           <a class="capsule count" href="#/plan">
             <Flag size={15} strokeWidth={2.25} />
             <span class="num">{weeks} нед</span>

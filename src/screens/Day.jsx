@@ -1,5 +1,5 @@
 import { useEffect } from 'preact/hooks'
-import { ChevronLeft, ChevronRight, MountainSnow, Moon } from 'lucide-preact'
+import { HeartPulse, MountainSnow, Moon } from 'lucide-preact'
 import {
   DAY_LONG, DAY_SHORT, MONTHS_GEN, PLAN_START, addDays, daysBetween, dayIndex, fmtDate, fmtHM,
   getDay, mondayOf, parse, plan,
@@ -21,6 +21,23 @@ const dateLong = (date) => {
   return `${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`
 }
 
+// Что за день: кардио / силовая / отдых и их комбинации через «+».
+const KIND = { run: 'Кардио', bike: 'Кардио', swim: 'Кардио', brick: 'Кардио', strength: 'Силовая', plyo: 'Силовая', mobility: 'Мобилити', race: 'Старт' }
+export function dayKind(day) {
+  if (day.event?.kind === 'medical' && day.rest) return 'Восстановление'
+  if (day.rest) return 'Отдых'
+  if (day.outside) return ''
+  const kinds = []
+  for (const it of day.items) {
+    const w = it.workout
+    if (!w) continue
+    const k = w.sport === 'alt' ? w.title : KIND[w.sport] || w.title
+    if (!kinds.includes(k)) kinds.push(k)
+  }
+  const t = kinds.join(' + ').toLowerCase()
+  return t.charAt(0).toUpperCase() + t.slice(1)
+}
+
 export function Day({ date, athlete, todayDate, dir }) {
   const day = getDay(date, athlete)
   const total = day.items.reduce((a, it) => a + it.minutes, 0)
@@ -35,12 +52,10 @@ export function Day({ date, athlete, todayDate, dir }) {
     return () => removeEventListener('keydown', on)
   }, [date])
 
-  // Заголовок: «Сегодня» / «Завтра» / «Вчера» или день недели; под ним — дата и общее время.
+  // Заголовок: «Чт, 12 ноября». Под ним — «Сегодня · Кардио + силовая».
   const rel = REL[daysBetween(todayDate, date)]
-  const title = rel || DAY_LONG[dayIndex(date)]
-  const sub = [rel ? `${DAY_LONG[dayIndex(date)]}, ${dateLong(date)}` : dateLong(date)]
-  if (total > 0) sub.push(fmtHM(total))
-  if (day.week?.kind === 'deload' && !day.event && !day.rest) sub.push('разгрузка')
+  const title = `${DAY_SHORT[dayIndex(date)]}, ${dateLong(date)}`
+  const sub = [rel, dayKind(day)].filter(Boolean).join(' · ')
 
   const isRace = day.event?.kind === 'race'
 
@@ -48,14 +63,14 @@ export function Day({ date, athlete, todayDate, dir }) {
     <>
       <div class="title-block">
         <h1 class="large-title">{title}</h1>
-        <p class="subtitle num">{sub.join(' · ')}</p>
+        <p class="subtitle">{sub}</p>
       </div>
 
       <WeekStrip monday={mondayOf(date)} selected={date} todayDate={todayDate} athlete={athlete} />
 
       <div class={`day-body anim-${dir || 'none'}`} key={date} {...swipe}>
         <div style="height:12px" />
-        {day.event && !isRace && (
+        {day.event && !isRace && day.event.kind !== 'medical' && (
           <div class="card event">
             <span class="badge bg-alt"><MountainSnow size={18} strokeWidth={2} /></span>
             <div>
@@ -71,11 +86,19 @@ export function Day({ date, athlete, todayDate, dir }) {
             <p>{plan.race.distances}</p>
           </div>
         ) : day.rest ? (
-          <div class="card rest">
-            <span class="rest-icon"><Moon size={26} strokeWidth={2} /></span>
-            <h2>Выходной</h2>
-            <p>Сон, еда, прогулка — восстановление тоже часть плана</p>
-          </div>
+          day.event?.kind === 'medical' ? (
+            <div class="card rest">
+              <span class="rest-icon is-medical"><HeartPulse size={26} strokeWidth={2} /></span>
+              <h2>{day.event.title} · восстановление</h2>
+              {day.event.note && <p>{day.event.note}</p>}
+            </div>
+          ) : (
+            <div class="card rest">
+              <span class="rest-icon"><Moon size={26} strokeWidth={2} /></span>
+              <h2>Выходной</h2>
+              <p>Сон, еда, прогулка — восстановление тоже часть плана</p>
+            </div>
+          )
         ) : day.outside ? (
           <div class="card rest">
             <h2>{date < PLAN_START ? 'Скоро старт' : 'Пока не расписано'}</h2>
@@ -93,9 +116,7 @@ export function Day({ date, athlete, todayDate, dir }) {
 
       {date !== todayDate && (
         <button class="to-today" onClick={() => goDay(todayDate)}>
-          {date > todayDate && <ChevronLeft size={20} strokeWidth={2.5} />}
           Сегодня
-          {date < todayDate && <ChevronRight size={20} strokeWidth={2.5} />}
         </button>
       )}
     </>
@@ -119,7 +140,7 @@ function Ahead({ date, athlete }) {
                 {DAY_SHORT[dayIndex(d.date)]} {parse(d.date).getDate()}
               </span>
               <span class={`ahead-title${d.rest || d.outside ? ' is-off' : ''}`}>
-                {d.rest ? 'Выходной' : d.outside ? '—' : titles}
+                {d.rest ? (d.event?.kind === 'medical' ? 'Восстановление' : 'Выходной') : d.outside ? '—' : titles}
               </span>
               {total > 0 && <span class="cell-value num">{fmtHM(total)}</span>}
             </button>

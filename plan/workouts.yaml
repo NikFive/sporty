@@ -1,103 +1,15 @@
-# План тренировок к 70.3 — единственный источник правды.
-# UI только читает этот файл. Правишь здесь → пушишь → сайт обновляется.
+# yaml-language-server: $schema=./schema/workouts.schema.json
+# Библиотека тренировок. Контракт и примеры — plan/README.md. Проверка: npm run validate
 #
-# Структура:
-#   athletes   — кто тренируется
-#   race       — ориентир гонки
-#   restDay    — фиксированный выходной (mon..sun)
-#   zones      — описание зон (общее; цифры у каждого свои)
-#   phases     — макроциклы
-#   milestones — точки на таймлайне (без влияния на расписание)
-#   events     — поездки/особые дни: заменяют расписание на свои дни
-#   workouts   — библиотека тренировок
-#   templates  — шаблоны недели: together = вместе, nikita/vanya = личные модули
-#   weeks      — календарь: какая неделя по какому шаблону
+# Ключ — id тренировки (латиница, цифры, _). На него ссылаются templates.yaml и calendar.yaml.
+# Переименовал id → поправь все ссылки (validate покажет, где).
 #
-# Сегменты (для графика профиля): [минуты, зона]
-#   зоны: z1..z5, str (силовая), plyo, mob (мобилити), alt (альтернатива)
-#   повтор: { x: 5, set: [[4, z5], [3, z1]] }
-#
-# В шаблонах: id@am — утро, id@pm — вечер (без суффикса — когда удобно).
-# Силовую ставим минимум через 6 ч после интенсивного кардио.
-# У тренировки можно задать formula: «10×100 м CSS» — короткая формула основной части.
-
-athletes:
-  nikita: { name: Никита, about: полная силовая и плиометрика }
-  vanya: { name: Ваня, about: "минимум силовой, больше выносливости" }
-
-race:
-  title: 70.3 Ironman
-  date: "2027-07-18"
-  tentative: true # конкретная гонка не выбрана — ориентир «лето 2027»
-  distances: 1.9 км плавание · 90 км вел · 21.1 км бег
-
-restDay: mon
-
-zones:
-  z1: { name: Восстановление, rpe: "1–2", talk: "можно петь, дыхание носом" }
-  z2: { name: Аэробная база, rpe: "3–4", talk: "говоришь предложениями" }
-  z3: { name: Темп, rpe: "5–6", talk: "говоришь фразами — «серая зона», минимум" }
-  z4: { name: Порог, rpe: "7–8", talk: "только отдельные слова" }
-  z5: { name: VO2max, rpe: "9", talk: "говорить не получается" }
-
-phases:
-  - id: base
-    title: База
-    start: "2026-11-09"
-    end: "2027-02-28"
-    focus: Объём в Z2, силовая на силу. С января — техника плавания.
-  - id: build
-    title: Build
-    start: "2027-03-01"
-    end: "2027-05-30"
-    focus: Пороги, длинный вел, силовая на поддержку.
-  - id: spec
-    title: Специфика
-    start: "2027-05-31"
-    end: "2027-07-04"
-    focus: Темп гонки, длинные брики.
-  - id: taper
-    title: Подводка
-    start: "2027-07-05"
-    end: "2027-07-18"
-    focus: Объём вниз, острота остаётся.
-
-milestones:
-  - date: "2026-12-15"
-    title: Операция Никиты
-    athlete: nikita
-    tentative: true
-    note: Дата уточняется. После операции — отдельный блок восстановления, впишем, когда будут сроки.
-  - date: "2027-01-11"
-    title: Старт бассейна
-    note: Две сессии плавания в неделю, сначала техника.
-
-events:
-  - id: sheregesh
-    title: Шерегеш
-    kind: trip
-    start: "2027-01-01"
-    end: "2027-01-07"
-    note: Неделя альтернативной нагрузки. Катаемся, плюс короткая поддержка тела.
-    day:
-      together: [snowboard]
-      nikita: [mobility_short]
-      vanya: [mobility_short]
-  - id: race
-    title: Гонка
-    kind: race
-    start: "2027-07-18"
-    end: "2027-07-18"
-    day:
-      together: [race]
-  # Пример выездной недели (раскомментируй и поставь даты):
-  # - id: ski-feb
-  #   title: Горнолыжка
-  #   kind: trip
-  #   start: "2027-02-13"
-  #   end: "2027-02-20"
-  #   day:
-  #     together: [snowboard]
+# segments — профиль для графика и статистики 80/20:
+#   [минуты, зона]                      — отрезок; зоны: z1..z5, str (силовая), plyo, mob (мобилити), alt (альтернатива)
+#   { x: 5, set: [[4, z5], [3, z1]] }   — повтор
+# formula: «10×100 м CSS» — короткая формула основной части (иначе считается из первого повтора).
+# zone: z4 — принудительная «ключевая зона» для цветного квадрата (иначе считается из segments).
+# notes: { nikita: ..., vanya: ... } — личные заметки атлету.
 
 workouts:
   # ───────── БЕГ ─────────
@@ -416,105 +328,7 @@ workouts:
 
   race:
     sport: race
-    title: 70.3
+    title: "70.3"
     main: 1.9 км плавание · 90 км вел · 21.1 км бег. Всё по плану питания и темпа.
     segments: [[40, z3], [5, z1], [170, z3], [5, z1], [120, z3]]
     why: Ради этого всё.
-
-templates:
-  base1:
-    title: База I
-    days:
-      mon: rest
-      tue: { together: [run_easy_strides@am], nikita: [strength_full_a@pm], vanya: [strength_min_a@pm] }
-      wed: { together: [bike_vo2] }
-      thu: { together: [run_z2@am], nikita: [plyo_a@pm, strength_full_b@pm], vanya: [strength_min_b@pm] }
-      fri: { together: [bike_z2] }
-      sat: { together: [run_long_z2] }
-      sun: { together: [bike_long_z2] }
-
-  base2:
-    title: База II · бассейн
-    days:
-      mon: rest
-      tue: { together: [run_easy_strides@am], nikita: [strength_full_a@pm], vanya: [strength_min_a@pm] }
-      wed: { together: [bike_vo2] }
-      thu: { together: [swim_technique@am], nikita: [plyo_a@pm, strength_full_b@pm], vanya: [strength_min_b@pm] }
-      fri: { together: [swim_aerobic@am, run_z2@pm] }
-      sat: { together: [run_long_z2] }
-      sun: { together: [bike_long_z2] }
-
-  build:
-    title: Build
-    draft: true
-    days:
-      mon: rest
-      tue: { together: [run_threshold] }
-      wed: { together: [swim_technique@am], nikita: [strength_maint@pm], vanya: [strength_min_a@pm] }
-      thu: { together: [bike_threshold] }
-      fri: { together: [swim_css@am], nikita: [plyo_a@pm], vanya: [strength_min_b@pm] }
-      sat: { together: [bike_long_build] }
-      sun: { together: [run_long_build] }
-
-  spec:
-    title: Специфика
-    draft: true
-    days:
-      mon: rest
-      tue: { together: [run_race_pace] }
-      wed: { together: [swim_aerobic@am], nikita: [strength_maint@pm], vanya: [strength_min_a@pm] }
-      thu: { together: [bike_race_pace] }
-      fri: { together: [swim_css@am], nikita: [plyo_a@pm] }
-      sat: { together: [brick_long] }
-      sun: { together: [run_long_build] }
-
-  taper:
-    title: Подводка
-    draft: true
-    days:
-      mon: rest
-      tue: { together: [run_openers] }
-      wed: { together: [swim_short] }
-      thu: { together: [bike_openers] }
-      fri: { together: [swim_short] }
-      sat: { together: [run_openers] }
-      sun: { together: [bike_z2] }
-
-# Неделя = понедельник. kind: deload — разгрузка (объём −30%), trip — выездная.
-weeks:
-  - { start: "2026-11-09", template: base1 }
-  - { start: "2026-11-16", template: base1 }
-  - { start: "2026-11-23", template: base1 }
-  - { start: "2026-11-30", template: base1, kind: deload }
-  - { start: "2026-12-07", template: base1 }
-  - { start: "2026-12-14", template: base1 }
-  - { start: "2026-12-21", template: base1 }
-  - { start: "2026-12-28", template: base1, kind: deload }
-  - { start: "2027-01-04", template: base2 }
-  - { start: "2027-01-11", template: base2 }
-  - { start: "2027-01-18", template: base2 }
-  - { start: "2027-01-25", template: base2, kind: deload }
-  - { start: "2027-02-01", template: base2 }
-  - { start: "2027-02-08", template: base2 }
-  - { start: "2027-02-15", template: base2 }
-  - { start: "2027-02-22", template: base2, kind: deload }
-  - { start: "2027-03-01", template: build }
-  - { start: "2027-03-08", template: build }
-  - { start: "2027-03-15", template: build }
-  - { start: "2027-03-22", template: build, kind: deload }
-  - { start: "2027-03-29", template: build }
-  - { start: "2027-04-05", template: build }
-  - { start: "2027-04-12", template: build }
-  - { start: "2027-04-19", template: build, kind: deload }
-  - { start: "2027-04-26", template: build }
-  - { start: "2027-05-03", template: build }
-  - { start: "2027-05-10", template: build }
-  - { start: "2027-05-17", template: build, kind: deload }
-  - { start: "2027-05-24", template: build }
-  - { start: "2027-05-31", template: spec }
-  - { start: "2027-06-07", template: spec }
-  - { start: "2027-06-14", template: spec }
-  - { start: "2027-06-21", template: spec, kind: deload }
-  - { start: "2027-06-28", template: spec }
-  - { start: "2027-07-05", template: taper }
-  - { start: "2027-07-12", template: taper }

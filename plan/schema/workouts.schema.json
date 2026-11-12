@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "plan/workouts.yaml",
+  "description": "Библиотека тренировок. На id тренировок ссылаются templates.yaml и calendar.yaml. Контракт — plan/README.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["workouts"],
+  "properties": {
+    "workouts": {
+      "description": "Словарь тренировок: ключ — id (латиница, цифры, _), значение — описание тренировки.",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$",
+        "x-error": "id тренировки — латиница в нижнем регистре, цифры и _, начинается с буквы (без @)"
+      },
+      "additionalProperties": { "$ref": "#/definitions/workout" }
+    }
+  },
+  "definitions": {
+    "zone": {
+      "description": "Зона отрезка: z1..z5 — пульсовые зоны, str — силовая, plyo — плиометрика, mob — мобилити, alt — альтернатива (сноуборд и т. п., не входит в объём 80/20).",
+      "type": "string",
+      "enum": ["z1", "z2", "z3", "z4", "z5", "str", "plyo", "mob", "alt"]
+    },
+    "workout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sport", "title", "main", "segments"],
+      "properties": {
+        "sport": {
+          "description": "Вид: run — бег, bike — вел, swim — плавание, brick — брик, strength — силовая, plyo — плиометрика, mobility — мобилити, alt — альтернатива, race — старт.",
+          "type": "string",
+          "enum": ["run", "bike", "swim", "brick", "strength", "plyo", "mobility", "alt", "race"]
+        },
+        "title": { "description": "Название тренировки в списке дня.", "type": "string", "minLength": 1 },
+        "formula": { "description": "Короткая формула основной части, например «10×100 м CSS». Без поля формула считается из первого повтора { x, set }.", "type": "string" },
+        "zone": { "description": "Принудительная ключевая зона для цветного квадрата. Без поля считается из segments.", "$ref": "#/definitions/zone" },
+        "warmup": { "description": "Разминка — текст для карточки тренировки.", "type": "string" },
+        "main": { "description": "Основная часть — текст для карточки тренировки.", "type": "string", "minLength": 1 },
+        "cooldown": { "description": "Заминка — текст для карточки тренировки.", "type": "string" },
+        "segments": {
+          "description": "Профиль тренировки для графика и статистики 80/20: список отрезков [минуты, зона] и повторов { x, set }. Сумма минут = длительность.",
+          "$ref": "#/definitions/segmentList"
+        },
+        "why": { "description": "Зачем эта тренировка — механизм простыми словами (мотивация).", "type": "string" },
+        "ref": { "description": "Источник: автор и год, например «Seiler 2010».", "type": "string" },
+        "notes": {
+          "description": "Личные заметки атлету: ключ — id атлета.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "nikita": { "description": "Заметка для Никиты.", "type": "string" },
+            "vanya": { "description": "Заметка для Вани.", "type": "string" }
+          }
+        }
+      }
+    },
+    "segmentList": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/segment" }
+    },
+    "segment": {
+      "description": "Отрезок [минуты, зона] или повтор { x: 5, set: [[4, z5], [3, z1]] }.",
+      "if": { "type": "array" },
+      "then": {
+        "type": "array",
+        "items": [
+          { "description": "Длительность в минутах (дробная можно: 0.33 = 20 с).", "type": "number", "exclusiveMinimum": 0 },
+          { "$ref": "#/definitions/zone" }
+        ],
+        "minItems": 2,
+        "additionalItems": false,
+        "x-error": "отрезок — это ровно [минуты, зона]"
+      },
+      "else": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["x", "set"],
+        "x-error": "ожидается отрезок [минуты, зона] или повтор { x, set }",
+        "properties": {
+          "x": { "description": "Сколько раз повторить set.", "type": "integer", "minimum": 1 },
+          "set": { "description": "Отрезки внутри одного повтора.", "$ref": "#/definitions/segmentList" }
+        }
+      }
+    }
+  }
+}

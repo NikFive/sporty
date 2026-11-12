@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "plan/templates.yaml",
+  "description": "Шаблоны недели. Неделя в calendar.yaml ссылается на шаблон по id. Контракт — plan/README.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["templates"],
+  "properties": {
+    "templates": {
+      "description": "Словарь шаблонов: ключ — id шаблона (латиница, цифры, _), значение — неделя из 7 дней.",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$",
+        "x-error": "id шаблона — латиница в нижнем регистре, цифры и _, начинается с буквы"
+      },
+      "additionalProperties": { "$ref": "#/definitions/template" }
+    }
+  },
+  "definitions": {
+    "template": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "days"],
+      "properties": {
+        "title": { "description": "Название шаблона в интерфейсе, например «База II · бассейн».", "type": "string", "minLength": 1 },
+        "draft": { "description": "true — черновик: UI помечает «детали могут поменяться».", "type": "boolean" },
+        "days": {
+          "description": "Все 7 дней недели. Ровно один день — rest, и это restDay из settings.yaml.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+          "properties": {
+            "mon": { "description": "Понедельник.", "$ref": "#/definitions/daySpec" },
+            "tue": { "description": "Вторник.", "$ref": "#/definitions/daySpec" },
+            "wed": { "description": "Среда.", "$ref": "#/definitions/daySpec" },
+            "thu": { "description": "Четверг.", "$ref": "#/definitions/daySpec" },
+            "fri": { "description": "Пятница.", "$ref": "#/definitions/daySpec" },
+            "sat": { "description": "Суббота.", "$ref": "#/definitions/daySpec" },
+            "sun": { "description": "Воскресенье.", "$ref": "#/definitions/daySpec" }
+          }
+        }
+      }
+    },
+    "daySpec": {
+      "description": "День: rest — отдых, или { together, nikita, vanya } — списки тренировок.",
+      "if": { "type": "string" },
+      "then": { "type": "string", "const": "rest", "x-error": "ожидается «rest» или объект { together, nikita, vanya }" },
+      "else": { "$ref": "#/definitions/daySlots" }
+    },
+    "daySlots": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "x-error": "ожидается «rest» или объект { together, nikita, vanya }",
+      "properties": {
+        "together": { "description": "Вместе: общие тренировки обоих атлетов (у каждого свои зоны).", "$ref": "#/definitions/refList" },
+        "nikita": { "description": "Личный модуль Никиты.", "$ref": "#/definitions/refList" },
+        "vanya": { "description": "Личный модуль Вани.", "$ref": "#/definitions/refList" }
+      }
+    },
+    "refList": {
+      "description": "Список ссылок на тренировки. Порядок в дне: утро (@am) → без времени → вечер (@pm); внутри — сначала together, потом личные.",
+      "type": "array",
+      "items": { "$ref": "#/definitions/workoutRef" }
+    },
+    "workoutRef": {
+      "description": "id тренировки из workouts.yaml, опционально с временем: run_z2@am — утро, run_z2@pm — вечер.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(@(am|pm))?$",
+      "x-error": "ожидается id тренировки, опционально с @am или @pm (например run_z2@am)"
+    }
+  }
+}
