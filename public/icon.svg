@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Sporty: «профиль зон» — мини-график интервальной тренировки -->
+  <rect width="512" height="512" rx="112" fill="#11100e"/>
+  <g fill="#ede9e0">
+    <rect x="82"  y="284" width="52" height="96"  rx="12"/>
+    <rect x="156" y="212" width="52" height="168" rx="12"/>
+    <rect x="230" y="100" width="52" height="280" rx="12" fill="#ff5b1f"/>
+    <rect x="304" y="240" width="52" height="140" rx="12"/>
+    <rect x="378" y="168" width="52" height="212" rx="12"/>
+    <rect x="82"  y="394" width="348" height="14" rx="7" opacity="0.45"/>
+  </g>
+</svg>
