@@ -1,6 +1,6 @@
 # AGENTS.md
 
-PWA (Vite + Preact) with a 70.3 Ironman training plan for two athletes (nikita, vanya). The UI is in Russian. Product context lives in `docs/context.md`.
+PWA (Vite + Preact) with a 70.3 Ironman training plan for two athletes (nikita, vanya). The UI is in Russian. Product context lives in `docs/context.md`. The coaching methodology (why the plan looks like this, progression rules, Nikita's shoulder protocol, sources) lives in `docs/coaching.md`; read it before changing training content.
 
 ## Repo map
 - `plan/*.yaml`: the training plan. It is data only and is the single source of truth. The contract is in `plan/README.md`, and the JSON Schemas are in `plan/schema/`.

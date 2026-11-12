@@ -13,33 +13,67 @@ phases:
   - id: base
     title: База
     start: "2026-11-09"
-    end: "2027-02-28"
-    focus: Объём в Z2, силовая на силу. С января — техника плавания.
+    end: "2027-03-07"
+    focus: Объём в Z2, силовая на силу, суб-порог раз в неделю. Никита — возвращение после операции на плече. С января — бассейн.
   - id: build
     title: Build
-    start: "2027-03-01"
+    start: "2027-03-08"
     end: "2027-05-30"
-    focus: Пороги, длинный вел, силовая на поддержку.
+    focus: Суб-порог и порог, длинный вел до 3 ч, бег 4 раза в неделю. Силовая на поддержку + верх.
   - id: spec
     title: Специфика
     start: "2027-05-31"
-    end: "2027-07-04"
-    focus: Темп гонки, длинные брики.
+    end: "2027-07-18"
+    focus: Темп гонки, длинные брики, открытая вода, питание как на гонке.
   - id: taper
     title: Подводка
-    start: "2027-07-05"
-    end: "2027-07-18"
-    focus: Объём вниз, острота остаётся.
+    start: "2027-07-19"
+    end: "2027-08-01"
+    focus: Объём вниз, острота остаётся. 1 августа — гонка.
 
 # Точки на таймлайне. Расписание НЕ меняют.
 milestones:
   - date: "2026-11-23"
     title: Операция Никиты
     athletes: [nikita]
-    note: Без тренировок 22–25 ноября. Дальше — по самочувствию; если восстановление затянется, добавим отдельный блок.
-  - date: "2027-01-11"
+    note: Реконструкция ключично-акромиального сустава. Без тренировок 22–25 ноября, дальше по этапам — ходьба и ноги, с 7 декабря бег-шаг (с разрешения хирурга).
+  - date: "2026-12-07"
+    title: Плечо — 2 недели, бег-шаг
+    athletes: [nikita]
+    tentative: true
+    note: С разрешения хирурга — бег-шаг ступенями, вел полностью, ноги тяжело (тренажёры), ЛФК. Боль в плече — шаг назад.
+  - date: "2027-01-04"
+    title: Плечо — 6 недель, полный бег
+    athletes: [nikita]
+    tentative: true
+    note: Бег и вел без ограничений, плиометрика, в бассейне — без гребка. Верх — только ЛФК.
+  - date: "2027-01-09"
     title: Старт бассейна
-    note: Две сессии плавания в неделю, сначала техника.
+    note: Ваня — техника и кроль. Никита — вода без гребка, пока не разрешат кроль.
+  - date: "2027-01-12"
+    title: Тесты — бег 30 мин и вел 20 мин
+    note: По результатам считаем личные зоны (пульс ПАНО, FTP).
+  - date: "2027-02-15"
+    title: Плечо — допуск к кролю и верху
+    athletes: [nikita]
+    tentative: true
+    note: ~12 недель после операции. Точную дату даёт хирург. Не разрешил — остаёмся на «бассейн без гребка» и ЛФК, сдвину шаблоны.
+  - date: "2027-03-09"
+    title: Тесты — начало build
+  - date: "2027-05-04"
+    title: Тесты — начало Build II
+  - date: "2027-05-15"
+    title: Вел на улице
+    tentative: true
+    note: Как только погода позволит — длинный вел на шоссе, отрабатываем посадку и питание.
+  - date: "2027-06-01"
+    title: Открытая вода и гидрокостюм
+    tentative: true
+    note: Хотя бы раз в неделю плавание в открытой воде вместо бассейна.
+  - date: "2027-06-13"
+    title: Контрольный старт
+    tentative: true
+    note: Олимпийка или полумарафон. Проверяем темп, питание и транзит. День заменит длинный бег.
 
 # Особые периоды с карточкой в UI. kind: trip | race | medical.
 # day — чем заменить каждый день периода: rest или { together, nikita, vanya }.
@@ -51,23 +85,22 @@ events:
     athletes: [nikita]
     start: "2026-11-22"
     end: "2026-11-25"
-    note: Восстановление после операции. Возвращаемся по самочувствию, без интенсивности первые дни.
+    note: Операция на плече. Полный отдых. Дальше — шаблон «после операции» — ходьба, лёгкий станок, ноги.
     day: rest
   - id: sheregesh
     title: Шерегеш
     kind: trip
     start: "2027-01-01"
     end: "2027-01-07"
-    note: Неделя альтернативной нагрузки. Катаемся, плюс короткая поддержка тела.
+    note: Неделя альтернативной нагрузки. Ваня катается. Никите ~6 недель после операции — падение на плечо может испортить реконструкцию, поэтому без доски, если хирург прямо не разрешил.
     day:
-      together: [snowboard]
-      nikita: [mobility_short]
-      vanya: [mobility_short]
+      vanya: [snowboard, mobility_short]
+      nikita: [hike_snow, shoulder_rehab]
   - id: race
     title: Гонка
     kind: race
-    start: "2027-07-18"
-    end: "2027-07-18"
+    start: "2027-08-01"
+    end: "2027-08-01"
     day:
       together: [race]
   # Пример выездной недели (раскомментируй и поставь даты):
@@ -81,48 +114,60 @@ events:
 
 # Тихая замена одного дня (без карточки в UI). Сильнее события и шаблона.
 # day: rest или { together, nikita, vanya } — ЦЕЛИКОМ заменяет день атлета.
-overrides: []
-  # - date: "2026-12-03"
-  #   athletes: [vanya]
-  #   day: rest
-  #   note: Перенос из-за работы
+overrides:
+  # Тесты раз в ~2 месяца: вт — бег 30 мин, ср — вел 20 мин. В эти дни без силовой.
+  - date: "2027-01-12"
+    day: { together: [test_run_30] }
+  - date: "2027-01-13"
+    day: { together: [test_bike_20] }
+  - date: "2027-03-09"
+    day: { together: [test_run_30] }
+  - date: "2027-03-10"
+    day: { together: [test_bike_20] }
+  - date: "2027-05-04"
+    day: { together: [test_run_30] }
+  - date: "2027-05-05"
+    day: { together: [test_bike_20] }
 
 # Неделя = понедельник, недели идут подряд без пропусков.
-# kind: deload — разгрузка (объём по шаблону ×0.7).
+# kind: deload — разгрузка (объём по шаблону ×0.7). Ритм 3:1: три недели по ступеням вверх, разгрузка
+# на шаблоне последней ступени, следующий блок стартует выше прошлого.
 weeks:
-  - { start: "2026-11-09", template: base1 }
-  - { start: "2026-11-16", template: base1 }
-  - { start: "2026-11-23", template: base1 }
-  - { start: "2026-11-30", template: base1, kind: deload }
-  - { start: "2026-12-07", template: base1 }
-  - { start: "2026-12-14", template: base1 }
-  - { start: "2026-12-21", template: base1 }
-  - { start: "2026-12-28", template: base1, kind: deload }
-  - { start: "2027-01-04", template: base2 }
-  - { start: "2027-01-11", template: base2 }
-  - { start: "2027-01-18", template: base2 }
-  - { start: "2027-01-25", template: base2, kind: deload }
-  - { start: "2027-02-01", template: base2 }
-  - { start: "2027-02-08", template: base2 }
-  - { start: "2027-02-15", template: base2 }
-  - { start: "2027-02-22", template: base2, kind: deload }
-  - { start: "2027-03-01", template: build }
-  - { start: "2027-03-08", template: build }
-  - { start: "2027-03-15", template: build }
-  - { start: "2027-03-22", template: build, kind: deload }
-  - { start: "2027-03-29", template: build }
-  - { start: "2027-04-05", template: build }
-  - { start: "2027-04-12", template: build }
-  - { start: "2027-04-19", template: build, kind: deload }
-  - { start: "2027-04-26", template: build }
-  - { start: "2027-05-03", template: build }
-  - { start: "2027-05-10", template: build }
-  - { start: "2027-05-17", template: build, kind: deload }
-  - { start: "2027-05-24", template: build }
-  - { start: "2027-05-31", template: spec }
-  - { start: "2027-06-07", template: spec }
-  - { start: "2027-06-14", template: spec }
-  - { start: "2027-06-21", template: spec, kind: deload }
-  - { start: "2027-06-28", template: spec }
-  - { start: "2027-07-05", template: taper }
-  - { start: "2027-07-12", template: taper }
+  - { start: "2026-11-09", template: base1_1 }
+  - { start: "2026-11-16", template: base1_2 }
+  - { start: "2026-11-23", template: base1_op }
+  - { start: "2026-11-30", template: base1_op, kind: deload }
+  - { start: "2026-12-07", template: base1_rtr_1 }
+  - { start: "2026-12-14", template: base1_rtr_2 }
+  - { start: "2026-12-21", template: base1_rtr_3 }
+  - { start: "2026-12-28", template: base1_rtr_3, kind: deload }
+  - { start: "2027-01-04", template: base2_sh_1 }
+  - { start: "2027-01-11", template: base2_sh_1 }
+  - { start: "2027-01-18", template: base2_sh_2 }
+  - { start: "2027-01-25", template: base2_sh_3 }
+  - { start: "2027-02-01", template: base2_sh_3, kind: deload }
+  - { start: "2027-02-08", template: base2_sh_4 }
+  - { start: "2027-02-15", template: base2_1 }
+  - { start: "2027-02-22", template: base2_2 }
+  - { start: "2027-03-01", template: base2_2, kind: deload }
+  - { start: "2027-03-08", template: build_1 }
+  - { start: "2027-03-15", template: build_2 }
+  - { start: "2027-03-22", template: build_3 }
+  - { start: "2027-03-29", template: build_3, kind: deload }
+  - { start: "2027-04-05", template: build_4 }
+  - { start: "2027-04-12", template: build_5 }
+  - { start: "2027-04-19", template: build_6 }
+  - { start: "2027-04-26", template: build_6, kind: deload }
+  - { start: "2027-05-03", template: build2_1 }
+  - { start: "2027-05-10", template: build2_2 }
+  - { start: "2027-05-17", template: build2_3 }
+  - { start: "2027-05-24", template: build2_3, kind: deload }
+  - { start: "2027-05-31", template: spec_1 }
+  - { start: "2027-06-07", template: spec_2 }
+  - { start: "2027-06-14", template: spec_3 }
+  - { start: "2027-06-21", template: spec_3, kind: deload }
+  - { start: "2027-06-28", template: spec_4 }
+  - { start: "2027-07-05", template: spec_5 }
+  - { start: "2027-07-12", template: spec_6 }
+  - { start: "2027-07-19", template: taper }
+  - { start: "2027-07-26", template: taper_race }
