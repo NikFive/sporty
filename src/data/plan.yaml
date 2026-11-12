@@ -16,10 +16,14 @@
 # Сегменты (для графика профиля): [минуты, зона]
 #   зоны: z1..z5, str (силовая), plyo, mob (мобилити), alt (альтернатива)
 #   повтор: { x: 5, set: [[4, z5], [3, z1]] }
+#
+# В шаблонах: id@am — утро, id@pm — вечер (без суффикса — когда удобно).
+# Силовую ставим минимум через 6 ч после интенсивного кардио.
+# У тренировки можно задать formula: «10×100 м CSS» — короткая формула основной части.
 
 athletes:
-  nikita: { name: Никита }
-  vanya: { name: Ваня }
+  nikita: { name: Никита, about: полная силовая и плиометрика }
+  vanya: { name: Ваня, about: "минимум силовой, больше выносливости" }
 
 race:
   title: 70.3 Ironman
@@ -289,6 +293,7 @@ workouts:
   swim_css:
     sport: swim
     title: Плавание — CSS
+    formula: 10×100 м CSS
     warmup: 400 м спокойно + 4 × 50 м с ускорением.
     main: 10 × 100 м на темпе CSS (Z4) через 15 с отдыха.
     cooldown: 200 м спокойно.
@@ -299,6 +304,7 @@ workouts:
   swim_short:
     sport: swim
     title: Плавание — активация
+    formula: 4×100 м Z3
     warmup: 300 м спокойно.
     main: 4 × 100 м бодро (Z3) через 30 с.
     cooldown: 200 м спокойно.
@@ -310,6 +316,7 @@ workouts:
   brick_long:
     sport: brick
     title: Длинный брик
+    formula: вел 2:10 → бег 0:30
     warmup: 10 мин вел Z1.
     main: 90 мин вел Z2 → 40 мин вел на темпе гонки → быстрый транзит → 30 мин бег на темпе гонки.
     cooldown: 10 мин шагом.
@@ -419,9 +426,9 @@ templates:
     title: База I
     days:
       mon: rest
-      tue: { together: [run_easy_strides], nikita: [strength_full_a], vanya: [strength_min_a] }
+      tue: { together: [run_easy_strides@am], nikita: [strength_full_a@pm], vanya: [strength_min_a@pm] }
       wed: { together: [bike_vo2] }
-      thu: { together: [run_z2], nikita: [plyo_a, strength_full_b], vanya: [strength_min_b] }
+      thu: { together: [run_z2@am], nikita: [plyo_a@pm, strength_full_b@pm], vanya: [strength_min_b@pm] }
       fri: { together: [bike_z2] }
       sat: { together: [run_long_z2] }
       sun: { together: [bike_long_z2] }
@@ -430,10 +437,10 @@ templates:
     title: База II · бассейн
     days:
       mon: rest
-      tue: { together: [run_easy_strides], nikita: [strength_full_a], vanya: [strength_min_a] }
+      tue: { together: [run_easy_strides@am], nikita: [strength_full_a@pm], vanya: [strength_min_a@pm] }
       wed: { together: [bike_vo2] }
-      thu: { together: [swim_technique], nikita: [plyo_a, strength_full_b], vanya: [strength_min_b] }
-      fri: { together: [swim_aerobic, run_z2] }
+      thu: { together: [swim_technique@am], nikita: [plyo_a@pm, strength_full_b@pm], vanya: [strength_min_b@pm] }
+      fri: { together: [swim_aerobic@am, run_z2@pm] }
       sat: { together: [run_long_z2] }
       sun: { together: [bike_long_z2] }
 
@@ -443,9 +450,9 @@ templates:
     days:
       mon: rest
       tue: { together: [run_threshold] }
-      wed: { together: [swim_technique], nikita: [strength_maint], vanya: [strength_min_a] }
+      wed: { together: [swim_technique@am], nikita: [strength_maint@pm], vanya: [strength_min_a@pm] }
       thu: { together: [bike_threshold] }
-      fri: { together: [swim_css], nikita: [plyo_a], vanya: [strength_min_b] }
+      fri: { together: [swim_css@am], nikita: [plyo_a@pm], vanya: [strength_min_b@pm] }
       sat: { together: [bike_long_build] }
       sun: { together: [run_long_build] }
 
@@ -455,9 +462,9 @@ templates:
     days:
       mon: rest
       tue: { together: [run_race_pace] }
-      wed: { together: [swim_aerobic], nikita: [strength_maint], vanya: [strength_min_a] }
+      wed: { together: [swim_aerobic@am], nikita: [strength_maint@pm], vanya: [strength_min_a@pm] }
       thu: { together: [bike_race_pace] }
-      fri: { together: [swim_css], nikita: [plyo_a] }
+      fri: { together: [swim_css@am], nikita: [plyo_a@pm] }
       sat: { together: [brick_long] }
       sun: { together: [run_long_build] }
 

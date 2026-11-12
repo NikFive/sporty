@@ -123,8 +123,11 @@ export function getDay(date, athlete) {
 
   const scale = week?.kind === 'deload' && !event ? DELOAD_SCALE : 1
   const items = []
-  for (const id of spec.together || []) items.push({ id, together: true })
-  for (const id of spec[athlete] || []) items.push({ id, together: false })
+  for (const ref of spec.together || []) items.push({ ...parseRef(ref), together: true })
+  for (const ref of spec[athlete] || []) items.push({ ...parseRef(ref), together: false })
+  // утро → без времени → вечер; внутри — общие раньше личных (sort стабильный)
+  const ORDER = { am: 0, undefined: 1, pm: 2 }
+  items.sort((a, b) => ORDER[a.time] - ORDER[b.time])
 
   return {
     ...base,
@@ -154,6 +157,7 @@ export function weekStats(days) {
       const k = d.scale || 1
       for (const [m, zone] of flatSegments(it.workout.segments)) {
         const mm = m * k
+        if (zone === 'alt') continue // сноуборд и т. п. — не тренировочный объём
         total += mm
         if (zone === 'z1' || zone === 'z2') z.easy += mm
         else if (zone === 'z3') z.grey += mm
@@ -174,4 +178,91 @@ export function nextTraining(date, athlete, limit = 14) {
     if (d.items.length) return d
   }
   return null
+}
+
+// ── v2: время суток, ключевая зона, формула, ч:мм, соседние тренировки ──
+
+// «run_z2@am» → { id: 'run_z2', time: 'am' }
+export function parseRef(ref) {
+  const [id, time] = String(ref).split('@')
+  return { id, time: time === 'am' || time === 'pm' ? time : undefined }
+}
+export const TIME_LABEL = { am: 'утро', pm: 'вечер' }
+
+// 0:40, 1:15
+export const fmtHM = (m) => {
+  m = Math.round(m)
+  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`
+}
+
+const ZRANK = { z1: 1, z2: 2, z3: 3, z4: 4, z5: 5 }
+export const ZONE_NAME = { z1: 'Z1', z2: 'Z2', z3: 'Z3', z4: 'Z4', z5: 'Z5', str: 'Сила', plyo: 'Прыжки', mob: 'Мобилити', alt: 'Альтернатива' }
+
+/**
+ * Ключевая зона тренировки — для цветного квадрата в строке и ленте.
+ * Если Z3–Z5 ≥ 15% времени — самая тяжёлая из них, иначе — зона с наибольшим временем.
+ * Можно переопределить полем zone: в YAML.
+ */
+export function keyZone(w) {
+  if (!w) return null
+  if (w.zone) return w.zone
+  const flat = flatSegments(w.segments)
+  const total = flat.reduce((a, [m]) => a + m, 0) || 1
+  const by = {}
+  for (const [m, z] of flat) by[z] = (by[z] || 0) + m
+  const hardMin = (by.z3 || 0) + (by.z4 || 0) + (by.z5 || 0)
+  if (hardMin / total >= 0.15) return ['z5', 'z4', 'z3'].find((z) => by[z])
+  // силовые и прыжки важнее разминочной мобилити
+  if (by.str) return 'str'
+  if (by.plyo) return 'plyo'
+  return Object.entries(by).sort((a, b) => b[1] - a[1])[0][0]
+}
+
+const fmtDur = (min) => {
+  const s = Math.round(min * 60)
+  if (s < 60) return `${s}″`
+  return s % 60 ? `${Math.floor(s / 60)}′${s % 60}″` : `${s / 60}′`
+}
+
+/** Короткая формула основной части: «5×4′ Z5». Поле formula: в YAML побеждает. */
+export function formula(w) {
+  if (!w) return ''
+  if (w.formula) return w.formula
+  const block = (w.segments || []).find((s) => !Array.isArray(s))
+  if (!block) return ''
+  const hardest = [...block.set].sort((a, b) => (ZRANK[b[1]] || 0) - (ZRANK[a[1]] || 0))[0]
+  return `${block.x}×${fmtDur(hardest[0])} ${ZONE_NAME[hardest[1]] || ''}`.trim()
+}
+
+/** Самый длинный сегмент — для «основной» в деталях, если интервалов нет. */
+export function mainSegment(w) {
+  const flat = flatSegments(w?.segments)
+  if (!flat.length) return ''
+  const [m, z] = [...flat].sort((a, b) => b[0] - a[0])[0]
+  return `${Math.round(m)}′ ${ZONE_NAME[z] || ''}`.trim()
+}
+
+/** Соседняя тренировка (dir = ±1), через дни. → { date, key, item } | null */
+export function neighborSession(date, key, athlete, dir, limit = 21) {
+  const day = getDay(date, athlete)
+  const i = day.items.findIndex((it) => it.key === key)
+  const j = i + dir
+  if (i >= 0 && j >= 0 && j < day.items.length) return { date, key: day.items[j].key, item: day.items[j] }
+  for (let n = 1; n <= limit; n++) {
+    const d = getDay(addDays(date, dir * n), athlete)
+    if (d.items.length) {
+      const it = dir > 0 ? d.items[0] : d.items[d.items.length - 1]
+      return { date: d.date, key: it.key, item: it }
+    }
+  }
+  return null
+}
+
+/** Неделя для «Сезона»: минуты по группам зон. */
+export function seasonWeeks(athlete) {
+  return plan.weeks.map((w, i) => {
+    const { days, stats } = getWeek(w.start, athlete)
+    const events = [...new Set(days.map((d) => d.event).filter(Boolean))]
+    return { n: i + 1, start: w.start, kind: w.kind, template: plan.templates[w.template], phase: phaseOf(w.start), events, stats }
+  })
 }

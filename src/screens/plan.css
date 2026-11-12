@@ -1,0 +1,356 @@
+/* ───── План ───── */
+.plan {
+  padding: 0 20px calc(var(--tabs-h, 58px) + 32px + env(safe-area-inset-bottom));
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.pl-num,
+.pl-n,
+.pl-date,
+.pl-total,
+.pl-ms-date,
+.pl-count-num,
+.pl-count-date,
+.pl-ph-range,
+.pl-zone-k {
+  font-variant-numeric: tabular-nums;
+}
+
+/* назад */
+.pl-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 15px;
+  color: var(--muted);
+}
+.pl-back:active { color: var(--text); }
+
+/* ───── отсчёт ───── */
+.pl-count { padding: 8px 0 24px; }
+.pl-count-line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.pl-count-num {
+  font: 500 64px/1 var(--mono);
+  color: var(--text);
+}
+.pl-count-label { font-size: 17px; font-weight: 500; }
+.pl-count-date {
+  margin-top: 12px;
+  font: 400 12px/16px var(--mono);
+  color: var(--muted);
+}
+.pl-count-dist {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted);
+}
+
+/* ───── 80/20 этой недели ───── */
+.pl-split {
+  padding: 12px 0 16px;
+  border-top: 1px solid var(--line);
+}
+.pl-split-head,
+.pl-split-legend {
+  font: 400 11px/16px var(--mono);
+  color: var(--muted);
+}
+.pl-split-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pl-split-bar {
+  display: flex;
+  height: 4px;
+  margin: 8px 0;
+  background: var(--line);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+/* ───── заливки зон ───── */
+.pl-seg-z1 { background: var(--z1); }
+.pl-seg-z2 { background: var(--z2); }
+.pl-seg-z3 { background: var(--z3); }
+.pl-seg-z4 { background: var(--z4); }
+.pl-seg-z5 { background: var(--z5); }
+.pl-seg-mob { background: var(--mob); }
+.pl-seg-str {
+  background: repeating-linear-gradient(135deg, var(--str) 0 1.5px, transparent 1.5px 4px);
+}
+.pl-seg-alt {
+  background: repeating-linear-gradient(135deg, var(--alt) 0 1.5px, transparent 1.5px 4px);
+}
+
+/* ───── сезон ───── */
+.pl-season {
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.pl-h2 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 500;
+}
+.pl-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 8px;
+  font: 400 11px/16px var(--mono);
+  color: var(--muted);
+}
+.pl-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pl-sw {
+  display: inline-block;
+  flex: none;
+  width: 12px;
+  height: 8px;
+  border-radius: 1px;
+}
+.pl-sw-draft {
+  border: 1px dashed var(--muted);
+}
+
+.pl-list { margin-top: 8px; }
+
+/* заголовок фазы */
+.pl-ph {
+  padding: 20px 0 8px;
+  border-bottom: 1px solid var(--line);
+}
+.pl-ph-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.pl-ph-title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+.pl-now {
+  font: 500 11px/16px var(--mono);
+  color: var(--signal);
+}
+.pl-ph-range {
+  margin-left: auto;
+  font: 400 11px/16px var(--mono);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pl-ph-focus {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted);
+}
+
+/* строка недели */
+.pl-list > li:not(.pl-ph) { border-bottom: 1px solid var(--line); }
+
+.pl-wk {
+  position: relative;
+  display: grid;
+  grid-template-columns: 20px 116px minmax(0, 1fr) 40px;
+  grid-template-rows: 30px;
+  grid-auto-rows: auto;
+  column-gap: 8px;
+  align-items: center;
+  margin: 0 -20px;
+  padding: 0 20px;
+  min-width: 0;
+}
+.pl-wk:active { background: var(--surface); }
+
+.pl-wk.is-now::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--signal);
+}
+
+.pl-n {
+  font: 400 11px/16px var(--mono);
+  color: var(--muted);
+  text-align: right;
+}
+.pl-wk.is-now .pl-n { color: var(--text); font-weight: 500; }
+
+.pl-when {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.pl-date {
+  flex: none;
+  font: 400 12px/16px var(--mono);
+}
+.pl-ev {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted);
+}
+.pl-ev-sw {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  background: repeating-linear-gradient(135deg, var(--alt) 0 1.5px, transparent 1.5px 3px);
+}
+
+.pl-track {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 2px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.pl-fill {
+  display: flex;
+  flex: none;
+  height: 10px;
+  border-radius: 1px;
+}
+.pl-fill .pl-seg { height: 100%; }
+.pl-fill.is-draft {
+  outline: 1px dashed var(--dim);
+  outline-offset: 1px;
+}
+.pl-fill.is-draft .pl-seg { opacity: 0.45; }
+
+.pl-deload {
+  flex: none;
+  font: 400 11px/16px var(--mono);
+  color: var(--muted);
+}
+
+.pl-total {
+  font: 400 12px/16px var(--mono);
+  text-align: right;
+  white-space: nowrap;
+}
+.pl-wk.is-draft .pl-total { color: var(--muted); }
+
+/* веха под неделей */
+.pl-ms {
+  grid-column: 2 / -1;
+  min-width: 0;
+  margin-top: -4px;
+  padding-bottom: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted);
+}
+.pl-ms-date { font-family: var(--mono); font-size: 11px; }
+
+/* финиш */
+.pl-race-title {
+  font: 500 13px/16px var(--mono);
+  color: var(--text);
+}
+
+/* ───── справка ───── */
+.pl-ref {
+  margin-top: 32px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.pl-ref-sum {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  cursor: pointer;
+  list-style: none;
+}
+.pl-ref-sum::-webkit-details-marker { display: none; }
+.pl-ref-hint {
+  font: 400 11px/16px var(--mono);
+  color: var(--muted);
+}
+.pl-ref-icon { margin-left: auto; color: var(--muted); transition: transform .16s var(--ease); }
+.pl-ref[open] .pl-ref-icon { transform: rotate(45deg); }
+
+.pl-ref-h {
+  margin: 12px 0 4px;
+  font: 400 12px/16px var(--mono);
+  color: var(--muted);
+}
+
+.pl-zones li {
+  display: grid;
+  grid-template-columns: 12px 24px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.pl-zones .pl-sw { width: 12px; height: 12px; align-self: center; }
+.pl-zone-k { font: 500 12px/20px var(--mono); }
+.pl-zone-body { display: flex; flex-direction: column; min-width: 0; }
+.pl-zone-name { font-size: 15px; line-height: 20px; }
+.pl-zone-talk {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted);
+}
+.pl-zone-talk .pl-num { font-family: var(--mono); font-size: 11px; }
+
+.pl-note {
+  margin: 8px 0 20px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted);
+}
+
+.pl-principles { padding-bottom: 20px; }
+.pl-principles li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.pl-principles li:last-child { border-bottom: 0; }
+.pl-pr-title { font-size: 15px; font-weight: 500; line-height: 20px; }
+.pl-pr-text {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 20px;
+}
+.pl-pr-ref {
+  display: block;
+  margin-top: 4px;
+  font: 400 11px/16px var(--mono);
+  color: var(--muted);
+}

@@ -1,20 +1,22 @@
 import { flatSegments } from '../lib/plan'
 
 const LEVEL = { z1: 0.22, z2: 0.42, z3: 0.62, z4: 0.82, z5: 1, str: 0.72, plyo: 0.9, mob: 0.16, alt: 0.5 }
+export const SCALE_MIN = 120 // общая шкала времени в строках: 120 мин = вся ширина
 
-// Профиль тренировки: ширина = время, высота и цвет = зона.
-export function Profile({ segments, height = 28, axis = false }) {
+/**
+ * Профиль тренировки: ширина = время, высота и цвет = зона.
+ * minutes — если задано, профиль занимает minutes/120 ширины (общая шкала для всех строк).
+ */
+export function Profile({ segments, height = 8, minutes, axis = false }) {
   const flat = flatSegments(segments)
   const total = flat.reduce((a, [m]) => a + m, 0) || 1
+  const frac = minutes ? Math.min(1, minutes / SCALE_MIN) : 1
+  const long = minutes && minutes > SCALE_MIN
   return (
     <div class="profile-wrap">
-      <div class="profile" style={{ height: `${height}px` }} aria-hidden="true">
+      <div class={`profile${long ? ' profile-long' : ''}`} style={{ height: `${height}px`, width: `${frac * 100}%` }} aria-hidden="true">
         {flat.map(([m, z], i) => (
-          <span
-            key={i}
-            class={`seg seg-${z}`}
-            style={{ flexGrow: m, height: `${(LEVEL[z] ?? 0.3) * 100}%` }}
-          />
+          <span key={i} class={`seg seg-${z}`} style={{ flexGrow: m, height: `${(LEVEL[z] ?? 0.3) * 100}%` }} />
         ))}
       </div>
       {axis && (
@@ -24,26 +26,6 @@ export function Profile({ segments, height = 28, axis = false }) {
           <span>{Math.round(total)}′</span>
         </div>
       )}
-    </div>
-  )
-}
-
-export function ZoneMix({ stats }) {
-  const { easy, grey, hard, cardio } = stats
-  if (!cardio) return null
-  const pct = (v) => Math.round((v / cardio) * 100)
-  return (
-    <div class="mix">
-      <div class="mix-bar">
-        <span class="mix-easy" style={{ flexGrow: easy }} />
-        {grey > 0 && <span class="mix-grey" style={{ flexGrow: grey }} />}
-        {hard > 0 && <span class="mix-hard" style={{ flexGrow: hard }} />}
-      </div>
-      <div class="mix-legend mono">
-        <span><i class="dot dot-easy" />Z1–2 {pct(easy)}%</span>
-        <span><i class="dot dot-grey" />Z3 {pct(grey)}%</span>
-        <span><i class="dot dot-hard" />Z4–5 {pct(hard)}%</span>
-      </div>
     </div>
   )
 }

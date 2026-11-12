@@ -59,7 +59,11 @@ function checkDaySpec(spec, where) {
       err(`${where}.${slot}: ожидается список тренировок, а получено ${JSON.stringify(ids)}.`)
       continue
     }
-    for (const id of ids) {
+    for (const ref of ids) {
+      // формат: id или id@am / id@pm (утро / вечер)
+      const [id, time, ...rest] = String(ref).split('@')
+      if (rest.length || (time != null && time !== 'am' && time !== 'pm'))
+        err(`${where}.${slot}: «${ref}» — после @ допустимо только am или pm.`)
       if (!Object.hasOwn(workouts, id)) err(`${where}.${slot}: тренировка «${id}» не найдена в workouts.`)
     }
   }
