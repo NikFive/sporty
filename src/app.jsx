@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { ATHLETES, mondayOf, plan, today, weeksToRace } from './lib/plan'
-import { Day, plural } from './screens/Day'
+import { Day } from './screens/Day'
 import { Plan } from './screens/Plan'
 import { Workout } from './screens/Workout'
-import { Icon } from './components/Icon'
+import { ChevronRight, Flag } from 'lucide-preact'
 
 // Выбранный атлет: cookie на 400 дней + localStorage как запасной вариант.
 const KEY = 'sporty.athlete'
@@ -94,37 +94,41 @@ export function App() {
   if (!athlete)
     return (
       <div class="pick">
-        <div class="pick-eyebrow">{plan.race.title} · {weeks} {plural(weeks, 'неделя', 'недели', 'недель')}</div>
-        <h1 class="pick-title">Кто тренируется</h1>
-        <div class="pick-list">
+        <h1 class="large-title">Кто ты?</h1>
+        <div class="card list">
           {ATHLETES.map((a) => (
-            <button class="pick-btn" key={a} onClick={() => pick(a)}>
+            <button class="cell" key={a} onClick={() => pick(a)}>
               <span class="pick-name">{plan.athletes[a].name}</span>
-              {plan.athletes[a].about && <span class="pick-about">{plan.athletes[a].about}</span>}
+              <ChevronRight class="chev" size={18} strokeWidth={2.5} />
             </button>
           ))}
         </div>
-        <p class="pick-hint">Запомним на этом телефоне. Сменить можно в шапке</p>
+        <p class="footnote">Поменять можно в любой момент — вверху экрана</p>
       </div>
     )
 
-  const other = ATHLETES.find((a) => a !== athlete)
   let screen
   if (route.view === 'plan') screen = <Plan athlete={athlete} todayDate={now} />
-  else if (route.view === 'workout') screen = <Workout date={route.date} idx={route.idx} athlete={athlete} />
+  else if (route.view === 'workout') screen = <Workout date={route.date} idx={route.idx} athlete={athlete} todayDate={now} />
   else screen = <Day date={route.date || now} athlete={athlete} todayDate={now} dir={route.dir} />
 
   return (
     <div class="app">
-      <header class="top">
-        <button class="who" onClick={() => pick(other)} aria-label={`Переключить на ${plan.athletes[other].name}`}>
-          {plan.athletes[athlete].name}
-          <Icon name="swap" class="who-swap" />
-        </button>
-        <a class={`count${route.view === 'plan' ? ' is-on' : ''}`} href={route.view === 'plan' ? '#/' : '#/plan'}>
-          <span class="num">{weeks}</span> нед · {plan.race.title.split(' ')[0]}
-        </a>
-      </header>
+      {route.view === 'day' && (
+        <header class="top">
+          <div class="seg" role="tablist" aria-label="Атлет">
+            {ATHLETES.map((a) => (
+              <button key={a} role="tab" aria-selected={a === athlete} class={a === athlete ? 'on' : ''} onClick={() => pick(a)}>
+                {plan.athletes[a].name}
+              </button>
+            ))}
+          </div>
+          <a class="capsule count" href="#/plan">
+            <Flag size={15} strokeWidth={2.25} />
+            <span class="num">{weeks} нед</span>
+          </a>
+        </header>
+      )}
       {screen}
     </div>
   )

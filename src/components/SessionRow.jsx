@@ -1,30 +1,34 @@
+import { Bike, ChevronRight, Dumbbell, Flag, Footprints, MountainSnow, PersonStanding, Repeat, Waves, Zap } from 'lucide-preact'
 import { SPORT, TIME_LABEL, fmtHM, formula, keyZone } from '../lib/plan'
-import { Profile } from './Profile'
 
-export const sportLabel = (w) => (SPORT[w.sport] || w.sport).toLowerCase()
+const SPORT_ICON = { run: Footprints, bike: Bike, swim: Waves, brick: Repeat, strength: Dumbbell, plyo: Zap, mobility: PersonStanding, alt: MountainSnow, race: Flag }
 
-export function ZoneSquare({ zone, size = 10 }) {
-  return <span class={`sq sq-${zone}`} style={{ width: `${size}px`, height: `${size}px` }} aria-hidden="true" />
+export const sportLabel = (w) => SPORT[w.sport] || w.sport
+
+// Цветной квадрат с иконкой вида спорта; цвет — ключевая зона тренировки.
+export function SportBadge({ workout, large = false }) {
+  const I = SPORT_ICON[workout.sport] || Footprints
+  return (
+    <span class={`badge${large ? ' badge-lg' : ''} bg-${keyZone(workout)}`} aria-hidden="true">
+      <I size={large ? 24 : 18} strokeWidth={2} />
+    </span>
+  )
 }
 
-// Компактная строка тренировки: зона, название, время; ниже — вид, общая/личная, утро/вечер, формула.
+// Строка тренировки: иконка, название, теги (общая/личная · утро/вечер · формула), время.
 export function SessionRow({ item, date }) {
   const w = item.workout
-  if (!w) return <div class="row row-missing">Нет тренировки «{item.id}» в библиотеке</div>
-  const meta = [sportLabel(w), item.together ? 'общая' : 'личная', TIME_LABEL[item.time], formula(w)].filter(Boolean)
+  if (!w) return <div class="cell">Нет тренировки «{item.id}»</div>
+  const tags = [item.together ? 'Общая' : 'Личная', TIME_LABEL[item.time], formula(w)].filter(Boolean).join(' · ')
   return (
-    <a class="row" href={`#/d/${date}/${item.key}`}>
-      <span class="row-head">
-        <ZoneSquare zone={keyZone(w)} />
-        <span class="row-title">{w.title}</span>
-        <span class="row-min num">{fmtHM(item.minutes)}</span>
+    <a class="cell" href={`#/d/${date}/${item.key}`}>
+      <SportBadge workout={w} />
+      <span class="cell-text">
+        <span class="cell-title" style="display:block">{w.title}</span>
+        <span class="cell-sub" style="display:block">{tags}</span>
       </span>
-      <span class="row-meta">
-        {meta.map((m, i) => (
-          <span key={i} class={m === 'личная' ? 'is-solo' : ''}>{i > 0 && ' · '}{m}</span>
-        ))}
-      </span>
-      <Profile segments={w.segments} minutes={item.minutes} height={6} />
+      <span class="cell-value num">{fmtHM(item.minutes)}</span>
+      <ChevronRight class="chev" size={18} strokeWidth={2.5} />
     </a>
   )
 }

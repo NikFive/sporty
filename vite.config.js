@@ -3,7 +3,7 @@ import yaml from '@rollup/plugin-yaml'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-const BG = '#11100e'
+const BG = '#121318'
 
 // https://vite.dev/config/
 export default defineConfig({
