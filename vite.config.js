@@ -9,6 +9,8 @@ const BG = '#121318'
 export default defineConfig({
   // время сборки = «версия плана», показываем в профиле
   define: { __BUILD_TIME__: JSON.stringify(new Date().toISOString()) },
+  // локально: node server/whoop.mjs на :8787
+  server: { proxy: { '/api': 'http://127.0.0.1:8787' } },
   plugins: [
     preact(),
     yaml(),
@@ -38,6 +40,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff2,svg,png,ico}'],
         navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/api\//],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,

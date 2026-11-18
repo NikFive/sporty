@@ -100,10 +100,18 @@ export function App() {
   const weeks = weeksToRace(now)
 
   // «Обновлено» после жеста «потянуть вниз»
-  const [toast, setToast] = useState(consumeRefreshedFlag)
+  const [toast, setToast] = useState(() => {
+    // возврат с WHOOP: /?whoop=ok|error#/me
+    const w = new URLSearchParams(location.search).get('whoop')
+    if (w) {
+      history.replaceState(null, '', location.pathname + location.hash)
+      return w === 'ok' ? 'WHOOP подключён' : 'Не удалось подключить WHOOP'
+    }
+    return consumeRefreshedFlag() ? 'План обновлён' : false
+  })
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(false), 2200)
+    const t = setTimeout(() => setToast(false), 2600)
     return () => clearTimeout(t)
   }, [toast])
 
@@ -161,7 +169,7 @@ export function App() {
       )}
       {screen}
       <PullToRefresh />
-      {toast && <div class="toast" role="status">План обновлён</div>}
+      {toast && <div class="toast" role="status">{toast}</div>}
     </div>
   )
 }

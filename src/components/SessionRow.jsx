@@ -37,7 +37,7 @@ export function DoneToggle({ athlete, date, item, large = false }) {
  * Строка тренировки: иконка, название, теги, время и галочка.
  * solo — общая по шаблону, но партнёра в этот день нет: пишем «Сам».
  */
-export function SessionRow({ item, date, athlete, solo = false }) {
+export function SessionRow({ item, date, athlete, solo = false, change = null }) {
   const w = item.workout
   if (!w) return <div class="cell">Нет тренировки «{item.id}»</div>
   const who = item.together ? (solo ? 'Сам' : 'Общая') : 'Личная'
@@ -51,7 +51,13 @@ export function SessionRow({ item, date, athlete, solo = false }) {
           <span class="cell-title" style="display:block">{w.title}</span>
           <span class="cell-sub" style="display:block">{tags}</span>
         </span>
-        <span class="cell-value num">{fmtHM(item.minutes)}</span>
+        {change && change.to !== change.from ? (
+          <span class="cell-value num is-adjusted" aria-label={`${fmtHM(change.to)} вместо ${fmtHM(item.minutes)} — скорректировано по WHOOP`}>
+            <s aria-hidden="true">{fmtHM(item.minutes)}</s> {change.to ? fmtHM(change.to) : '—'}
+          </span>
+        ) : (
+          <span class="cell-value num">{fmtHM(item.minutes)}</span>
+        )}
       </a>
       <DoneToggle athlete={athlete} date={date} item={item} />
     </div>

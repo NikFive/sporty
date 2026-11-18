@@ -1,4 +1,5 @@
-import { Check, ChevronLeft, ChevronRight, Flag, RefreshCw } from 'lucide-preact'
+import { Activity, Check, ChevronLeft, ChevronRight, Flag, RefreshCw, Unlink } from 'lucide-preact'
+import { connectUrl, disconnect, useWhoopStatus } from '../lib/whoop'
 import { BUILD_TIME, refreshApp } from '../lib/update'
 import { MONTHS_GEN } from '../lib/plan'
 import { ATHLETES, plan } from '../lib/plan'
@@ -31,6 +32,8 @@ export function Profile({ athlete, back = '#/', onPick }) {
         </a>
       </div>
 
+      <Whoop athlete={athlete} />
+
       <h2 class="section-title">Обновления</h2>
       <div class="card list plain">
         <button class="cell" onClick={() => refreshApp()}>
@@ -49,4 +52,49 @@ export function Profile({ athlete, back = '#/', onPick }) {
 const fmtBuild = (iso) => {
   const d = new Date(iso)
   return `${d.getDate()} ${MONTHS_GEN[d.getMonth()]}, ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+// WHOOP: подключить / отключить. Подключение — OAuth на сайте WHOOP, потом возвращаемся сюда.
+function Whoop({ athlete }) {
+  const st = useWhoopStatus(athlete)
+  const name = plan.athletes[athlete].name
+  const mine = st?.connected && st?.authorized
+  const who = st?.profile ? [st.profile.firstName, st.profile.lastName].filter(Boolean).join(' ') : null
+  return (
+    <>
+      <h2 class="section-title">WHOOP</h2>
+      <div class="card list plain">
+        {mine ? (
+          <>
+            <div class="cell">
+              <span class="badge bg-z2"><Activity size={18} strokeWidth={2} /></span>
+              <span class="cell-text">
+                <span class="cell-title" style="display:block">Подключён</span>
+                {who && <span class="cell-sub" style="display:block">{who}</span>}
+              </span>
+              <Check size={22} strokeWidth={2.5} class="check" />
+            </div>
+            <button class="cell" onClick={() => confirm(`Отключить WHOOP для ${name}?`) && disconnect(athlete)}>
+              <span class="badge bg-mob"><Unlink size={18} strokeWidth={2} /></span>
+              <span class="cell-text"><span class="cell-title is-danger" style="display:block">Отключить</span></span>
+            </button>
+          </>
+        ) : (
+          <a class={`cell${st && !st.configured ? ' is-disabled' : ''}`} href={st?.configured ? connectUrl(athlete) : undefined} aria-disabled={!st?.configured}>
+            <span class="badge bg-z1"><Activity size={18} strokeWidth={2} /></span>
+            <span class="cell-text">
+              <span class="cell-title" style="display:block">{st?.connected ? 'Подключить на этом телефоне' : 'Подключить WHOOP'}</span>
+              <span class="cell-sub" style="display:block">
+                {st == null ? 'Нет связи с сервером' : !st.configured ? 'Скоро — сервер ещё настраивается' : `Аккаунт ${name}`}
+              </span>
+            </span>
+            <ChevronRight class="chev" size={18} strokeWidth={2.5} />
+          </a>
+        )}
+      </div>
+      <p class="footnote">
+        Берём восстановление, HRV, пульс покоя, сон и strain. На главной покажем, как скорректировать сегодняшнюю тренировку
+      </p>
+    </>
+  )
 }

@@ -8,6 +8,8 @@ import { useDoneVersion } from '../lib/done'
 import { goDay, useSwipe } from '../lib/nav'
 import { WeekStrip } from '../components/WeekStrip'
 import { SessionRow } from '../components/SessionRow'
+import { Readiness, dayAdjustment } from '../components/Readiness'
+import { useWhoop } from '../lib/whoop'
 
 export function plural(n, one, few, many) {
   const m10 = n % 10, m100 = n % 100
@@ -62,6 +64,10 @@ export function Day({ date, athlete, todayDate, dir }) {
   useDoneVersion()
   const partner = partnerInfo(date, athlete, day)
   const deload = day.week?.kind === 'deload' && !day.event && !day.rest
+  // WHOOP: показатели и корректировка — только для сегодняшнего дня
+  const whoop = useWhoop(athlete)
+  const isToday = date === todayDate
+  const adj = isToday ? dayAdjustment(day, whoop) : null
 
   useEffect(() => {
     const on = (e) => {
@@ -90,6 +96,7 @@ export function Day({ date, athlete, todayDate, dir }) {
 
       <div class={`day-body anim-${dir || 'none'}`} key={date} {...swipe}>
         <div style="height:12px" />
+        {isToday && <Readiness day={day} whoop={whoop} adj={adj} />}
         {day.event && !isRace && day.event.kind !== 'medical' && (
           <div class="card event">
             <span class="badge bg-alt"><MountainSnow size={18} strokeWidth={2} /></span>
@@ -137,7 +144,7 @@ export function Day({ date, athlete, todayDate, dir }) {
             )}
             <div class="card list">
               {day.items.map((it) => (
-                <SessionRow key={it.key} item={it} date={date} athlete={athlete} solo={partner.soloIds.has(it.id)} />
+                <SessionRow key={it.key} item={it} date={date} athlete={athlete} solo={partner.soloIds.has(it.id)} change={adj?.changes.get(it.key)} />
               ))}
             </div>
           </>

@@ -7,6 +7,8 @@ PWA (Vite + Preact) with a 70.3 Ironman training plan for two athletes (nikita, 
 - `scripts/validate-plan.mjs`: checks the plan against the schemas and the cross-file invariants. Run it with `npm run validate`; `npm run build` also runs it first.
 - `src/lib/plan.js`: loads and merges the four YAML files. It exposes `plan`, `getDay`, `getWeek`, `seasonWeeks`, and so on.
 - `src/app.jsx`, `src/screens/`, `src/components/`, `src/styles.css`: the UI. It only reads `src/lib/plan.js`.
+- `server/`: the WHOOP API (`whoop.mjs`, zero-dep Node, systemd `sporty-api`, nginx proxies `/api/`). See `server/README.md`; it is deployed by hand, not by Actions.
+- `src/lib/whoop.js` (client, device key), `src/lib/readiness.js` (WHOOP → day adjustment model, rules in `docs/coaching.md` § «Готовность»), `src/components/Readiness.jsx` (card on today's screen).
 - `.github/workflows/deploy.yml`: on every push to `main`, it runs `npm ci && npm run build` and rsyncs `dist/` to the server.
 
 ## To edit the training plan

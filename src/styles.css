@@ -31,6 +31,11 @@
   --mob: #636366;
   --alt: #64d2ff;
 
+  /* WHOOP recovery — те же три цвета, что в приложении WHOOP */
+  --rec-green: #30d158;
+  --rec-yellow: #ffd60a;
+  --rec-red: #ff453a;
+
   /* виды спорта — для графика «Виды спорта» */
   --swim: #64d2ff;
   --bike: #ff9f0a;
@@ -347,3 +352,32 @@ a.race { display: block; color: inherit; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, -8px); } }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 h1[tabindex="-1"]:focus { outline: none; }
+
+/* ───── Готовность (WHOOP) ───── */
+.rd { padding: 16px; margin-bottom: 12px; }
+.rd-head { display: flex; align-items: center; gap: 14px; }
+.rd-head-text { min-width: 0; }
+.ring { flex: none; }
+.ring-num { font: 700 19px var(--font); fill: var(--label); font-variant-numeric: tabular-nums; }
+.rd-kicker { display: block; font-size: 13px; color: var(--label-2); }
+.rd-title { font-size: 20px; line-height: 25px; font-weight: 700; margin-top: 1px; }
+.rd-summary { font-size: 15px; line-height: 20px; color: var(--label-2); margin-top: 2px; }
+.rd-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 0.5px solid var(--separator); }
+.rd-stat { display: flex; flex-direction: column; min-width: 0; }
+.rd-stat-label { font-size: 12px; color: var(--label-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rd-stat-value { font-size: 20px; line-height: 26px; font-weight: 600; }
+.rd-stat-value.is-warn { color: var(--rec-yellow); }
+.rd-stat-sub { font-size: 12px; color: var(--label-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rd-changes { margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--separator); display: flex; flex-direction: column; gap: 8px; }
+.rd-changes li { display: flex; flex-direction: column; }
+.rd-ch-title { font-size: 15px; font-weight: 600; }
+.rd-ch-how { font-size: 14px; color: var(--label-2); }
+.rd-ch-how s, .is-adjusted s { color: var(--label-3); }
+.rd-why { font-size: 13px; line-height: 18px; color: var(--label-2); margin-top: 12px; }
+.cell-value.is-adjusted { color: var(--rec-yellow); white-space: nowrap; }
+.rd-connect { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 12px; }
+.rd-connect-dot { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 4px solid var(--rec-green); border-right-color: var(--rec-yellow); border-bottom-color: var(--rec-red); }
+.rd-connect:active { background: var(--glass-strong); }
+.is-danger { color: #ff6961; }
+.cell.is-disabled { opacity: 0.55; pointer-events: none; }
+@media (max-width: 360px) { .rd-stat-value { font-size: 17px; } }

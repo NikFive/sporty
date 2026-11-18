@@ -1,0 +1,19 @@
+[Unit]
+Description=Sporty API (WHOOP OAuth + data)
+After=network-online.target
+
+[Service]
+User=sporty
+EnvironmentFile=/etc/sporty/whoop.env
+Environment=DATA_DIR=/var/lib/sporty
+ExecStart=/usr/bin/node /opt/sporty-api/whoop.mjs
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/sporty
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
