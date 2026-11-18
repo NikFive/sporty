@@ -1,0 +1,8 @@
+{
+  "name": "sporty-api",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.10.0"
+  }
+}

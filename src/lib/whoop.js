@@ -90,3 +90,42 @@ export function useWhoop(athlete) {
   }, [athlete])
   return st
 }
+
+// ───────── ИИ-тренер ─────────
+const COACH_EVT = 'sporty:coach'
+const COACH_CACHE = (a) => `sporty.coach.${a}`
+
+export async function coachFeedback(athlete, body) {
+  await fetch(`/api/coach/feedback?athlete=${athlete}`, {
+    method: 'POST', headers: { 'x-sporty-device': deviceKey() || '', 'content-type': 'application/json' }, body: JSON.stringify(body),
+  }).catch(() => null)
+  dispatchEvent(new Event(COACH_EVT))
+}
+
+/** Решение тренера на сегодня: { status: 'ok'|'none'|'error'|..., running, decision, feedback, recovery, costUsd } | null */
+export function useCoach(athlete) {
+  const [st, setSt] = useState(() => { try { return JSON.parse(localStorage.getItem(COACH_CACHE(athlete)) || 'null') } catch { return null } })
+  useEffect(() => {
+    let alive = true, timer = null, polls = 0
+    const load = async () => {
+      clearTimeout(timer)
+      const r = await fetch(`/api/coach/today?athlete=${athlete}`, { headers: { 'x-sporty-device': deviceKey() || '' }, cache: 'no-store' }).catch(() => null)
+      if (!alive || !r) return
+      if (!r.ok) { setSt(null); return }
+      const j = await r.json().catch(() => null)
+      if (!alive || !j) return
+      setSt(j)
+      try { localStorage.setItem(COACH_CACHE(athlete), JSON.stringify(j)) } catch { /* приватный режим */ }
+      // тренер думает (или вот-вот начнёт после свежего recovery) — опрашиваем до ~3 мин
+      if ((j.running || j.status === 'none') && polls++ < 12) timer = setTimeout(load, 15_000)
+    }
+    load()
+    const vis = () => { if (!document.hidden) { polls = 0; load() } }
+    document.addEventListener('visibilitychange', vis)
+    addEventListener(COACH_EVT, load)
+    addEventListener(EVT, load)
+    return () => { alive = false; clearTimeout(timer); document.removeEventListener('visibilitychange', vis); removeEventListener(COACH_EVT, load); removeEventListener(EVT, load) }
+  }, [athlete])
+  // кэш вчерашнего дня не показываем
+  return st && st.date === new Date().toLocaleDateString('en-CA') ? st : st && { ...st, status: 'none', decision: null }
+}

@@ -1,5 +1,5 @@
 import { useEffect } from 'preact/hooks'
-import { ChevronRight, HeartPulse, MountainSnow, Moon, Users } from 'lucide-preact'
+import { ChevronRight, HeartPulse, MountainSnow, Moon, Sparkles, Users } from 'lucide-preact'
 import {
   ATHLETES, DAY_LONG, DAY_SHORT, MONTHS_GEN, PLAN_START, addDays, daysBetween, dayIndex, fmtDate, fmtHM,
   getDay, mondayOf, parse, plan,
@@ -9,7 +9,8 @@ import { goDay, useSwipe } from '../lib/nav'
 import { WeekStrip } from '../components/WeekStrip'
 import { SessionRow } from '../components/SessionRow'
 import { Readiness, dayAdjustment } from '../components/Readiness'
-import { useWhoop } from '../lib/whoop'
+import { useCoach, useWhoop } from '../lib/whoop'
+import { activeDecision, coachDay, inWindow } from '../lib/coach'
 
 export function plural(n, one, few, many) {
   const m10 = n % 10, m100 = n % 100
@@ -58,7 +59,12 @@ function partnerInfo(date, athlete, day) {
 }
 
 export function Day({ date, athlete, todayDate, dir }) {
-  const day = getDay(date, athlete)
+  const planDay = getDay(date, athlete)
+  // ИИ-тренер: решение на сегодня может переставить дни и поправить тренировки на неделю вперёд
+  const coach = useCoach(athlete)
+  const dec = inWindow(date, todayDate) ? activeDecision(coach) : null
+  const cd = coachDay(date, athlete, planDay, dec)
+  const day = cd.day
   const total = day.items.reduce((a, it) => a + it.minutes, 0)
   const swipe = useSwipe(() => goDay(addDays(date, 1)), () => goDay(addDays(date, -1)))
   useDoneVersion()
@@ -67,7 +73,9 @@ export function Day({ date, athlete, todayDate, dir }) {
   // WHOOP: показатели и корректировка — только для сегодняшнего дня
   const whoop = useWhoop(athlete)
   const isToday = date === todayDate
-  const adj = isToday ? dayAdjustment(day, whoop) : null
+  const v1 = isToday ? dayAdjustment(planDay, whoop) : null
+  const adj = v1 && (dec || coach?.feedback?.reverted ? { ...v1, changes: cd.changes } : v1)
+  const changes = dec ? cd.changes : adj?.changes
 
   useEffect(() => {
     const on = (e) => {
@@ -96,7 +104,13 @@ export function Day({ date, athlete, todayDate, dir }) {
 
       <div class={`day-body anim-${dir || 'none'}`} key={date} {...swipe}>
         <div style="height:12px" />
-        {isToday && <Readiness day={day} whoop={whoop} adj={adj} />}
+        {isToday && <Readiness day={day} whoop={whoop} adj={adj} coach={coach} athlete={athlete} />}
+        {cd.swappedWith && (
+          <div class="card event">
+            <span class="badge bg-str"><Sparkles size={18} strokeWidth={2} /></span>
+            <p class="event-solo">ИИ-тренер переставил: этот день поменялся местами с {DAY_SHORT[dayIndex(cd.swappedWith)].toLowerCase()} {parse(cd.swappedWith).getDate()}</p>
+          </div>
+        )}
         {day.event && !isRace && day.event.kind !== 'medical' && (
           <div class="card event">
             <span class="badge bg-alt"><MountainSnow size={18} strokeWidth={2} /></span>
@@ -144,7 +158,7 @@ export function Day({ date, athlete, todayDate, dir }) {
             )}
             <div class="card list">
               {day.items.map((it) => (
-                <SessionRow key={it.key} item={it} date={date} athlete={athlete} solo={partner.soloIds.has(it.id)} change={adj?.changes.get(it.key)} />
+                <SessionRow key={it.key} item={it} date={date} athlete={athlete} solo={partner.soloIds.has(it.id)} change={changes?.get(it.key)} />
               ))}
             </div>
           </>

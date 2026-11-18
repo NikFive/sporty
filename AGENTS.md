@@ -8,7 +8,8 @@ PWA (Vite + Preact) with a 70.3 Ironman training plan for two athletes (nikita, 
 - `src/lib/plan.js`: loads and merges the four YAML files. It exposes `plan`, `getDay`, `getWeek`, `seasonWeeks`, and so on.
 - `src/app.jsx`, `src/screens/`, `src/components/`, `src/styles.css`: the UI. It only reads `src/lib/plan.js`.
 - `server/`: the WHOOP API (`whoop.mjs`, zero-dep Node, systemd `sporty-api`, nginx proxies `/api/`). See `server/README.md`; it is deployed by hand, not by Actions.
-- `src/lib/whoop.js` (client, device key), `src/lib/readiness.js` (WHOOP → day adjustment model, rules in `docs/coaching.md` § «Готовность»), `src/components/Readiness.jsx` (card on today's screen).
+- `server/coach.mjs`: the daily AI coach (Claude, structured output, rule validation); `scripts/export-coach.mjs` exports the resolved plan + coaching.md for it at build time. Changing `docs/coaching.md` changes the coach's behaviour.
+- `src/lib/whoop.js` (client, device key, coach hook), `src/lib/coach.js` (overlay of the coach decision onto the plan), `src/lib/readiness.js` (WHOOP → day adjustment model, rules in `docs/coaching.md` § «Готовность»), `src/components/Readiness.jsx` (card on today's screen).
 - `.github/workflows/deploy.yml`: on every push to `main`, it runs `npm ci && npm run build` and rsyncs `dist/` to the server.
 
 ## To edit the training plan

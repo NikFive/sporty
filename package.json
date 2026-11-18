@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "validate": "node scripts/validate-plan.mjs",
-    "build": "node scripts/validate-plan.mjs && vite build",
+    "build": "node scripts/validate-plan.mjs && vite build && node scripts/export-coach.mjs",
     "preview": "vite preview",
     "generate-pwa-assets": "pwa-assets-generator"
   },

@@ -381,3 +381,12 @@ h1[tabindex="-1"]:focus { outline: none; }
 .is-danger { color: #ff6961; }
 .cell.is-disabled { opacity: 0.55; pointer-events: none; }
 @media (max-width: 360px) { .rd-stat-value { font-size: 17px; } }
+.rd-spark { vertical-align: -2px; color: #bf9bff; }
+.rd-ch-date { color: var(--label-2); font-weight: 500; }
+.rd-thinking { color: var(--label); }
+.rd-actions { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--separator); }
+.rd-vote, .rd-revert { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; border-radius: 18px; background: var(--glass); box-shadow: var(--glass-hi), 0 0 0 0.5px var(--glass-border); color: var(--label-2); font-size: 15px; transition: transform .15s var(--ease); }
+.rd-vote { width: 44px; }
+.rd-vote.is-on { color: var(--label); background: var(--glass-strong); }
+.rd-revert { margin-left: auto; padding: 0 14px; color: var(--accent-text); }
+.rd-vote:active, .rd-revert:active { transform: scale(0.96); }

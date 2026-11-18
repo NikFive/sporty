@@ -10,7 +10,7 @@ export default defineConfig({
   // время сборки = «версия плана», показываем в профиле
   define: { __BUILD_TIME__: JSON.stringify(new Date().toISOString()) },
   // локально: node server/whoop.mjs на :8787
-  server: { proxy: { '/api': 'http://127.0.0.1:8787' } },
+  server: { proxy: { '/api': process.env.API_PROXY || 'http://127.0.0.1:8787' } },
   plugins: [
     preact(),
     yaml(),

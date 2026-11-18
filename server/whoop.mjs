@@ -13,6 +13,7 @@ import { createServer } from 'node:http'
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { createCoach } from './coach.mjs'
 
 const {
   WHOOP_CLIENT_ID = '',
@@ -201,6 +202,8 @@ const redirect = (res, to) => send(res, 302, '', { location: to })
 const back = (res, params) => redirect(res, `${PUBLIC_URL}/?${new URLSearchParams(params)}#/me`)
 
 const cache = new Map()
+const coach = createCoach({ db, persist, whoop, log, planDir: process.env.PLAN_DIR || '/var/www/sporty/_coach', athletes: ATHLETES })
+coach.startScheduler()
 
 function readJson(req, limit = 256 * 1024) {
   return new Promise((resolve, reject) => {
@@ -300,12 +303,28 @@ async function handle(req, res) {
     try {
       const data = await summary(athlete)
       cache.set(athlete, { at: Date.now(), data })
+      rec.lastToday = { recovery: data.recovery, at: data.fetchedAt }
+      // свежее восстановление и тренер сегодня ещё не решал — запускаем в фоне
+      const c = coach.today(athlete)
+      if (coach.enabled && data.recovery && c.status !== 'ok' && !c.running) coach.run(athlete, { reason: 'open' }).catch(() => {})
       return send(res, 200, data)
     } catch (e) {
       log('today', athlete, e.message)
       if (c) return send(res, 200, { ...c.data, stale: true })
       return send(res, e.status === 409 ? 409 : 502, { error: e.message })
     }
+  }
+
+  if (p === '/api/coach/today') return send(res, 200, coach.today(athlete))
+  if (p === '/api/coach/run' && req.method === 'POST') {
+    const c = rec.coach?.[coach.today(athlete).date]
+    if (c?.at && Date.now() - new Date(c.at) < 10 * 60_000) return send(res, 429, { error: 'too often' })
+    coach.run(athlete, { force: true, reason: 'manual' }).catch(() => {})
+    return send(res, 202, { ok: true })
+  }
+  if (p === '/api/coach/feedback' && req.method === 'POST') {
+    const body = await readJson(req).catch(() => ({}))
+    return send(res, 200, { feedback: coach.feedback(athlete, body) })
   }
 
   if (p === '/api/done') {
