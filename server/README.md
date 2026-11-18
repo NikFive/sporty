@@ -8,7 +8,7 @@
 | `/opt/sporty-api/whoop.mjs` | код (копия `server/whoop.mjs`) |
 | `/etc/systemd/system/sporty-api.service` | юнит, пользователь `sporty` |
 | `/etc/sporty/whoop.env` | `WHOOP_CLIENT_ID`, `WHOOP_CLIENT_SECRET`, `PUBLIC_URL`, `PORT` (0640 root:sporty) |
-| `/var/lib/sporty/whoop.json` | токены и device-ключи (sha256), 0600 |
+| `/var/lib/sporty/whoop.json` | токены, device-ключи (sha256) и отметки «Сделано», 0600 |
 
 ## WHOOP-приложение (developer-dashboard.whoop.com)
 - Redirect URL: `https://72-56-96-233.sslip.io/api/whoop/callback`
@@ -22,6 +22,7 @@
 - `GET /api/whoop/callback` → обмен кода, редирект на `/?whoop=ok#/me`
 - `GET /api/whoop/status?athlete=` (заголовок `x-sporty-device`) → `{ configured, connected, authorized, profile }`
 - `GET /api/whoop/today?athlete=` (`x-sporty-device`) → recovery, baseline (среднее за 30 дн), sleep, strain. Кэш 5 мин, `&fresh=1` — мимо кэша
+- `GET|POST /api/done?athlete=` (`x-sporty-device`) → отметки «Сделано» `{ items: { 'YYYY-MM-DD:id': { d: 1|0, at } } }`, слияние last-write-wins. Пишет только телефон, подключённый к WHOOP атлета
 - `POST /api/whoop/disconnect?athlete=` → отзыв доступа в WHOOP и удаление токенов
 
 Доступ без аккаунтов: телефон генерирует случайный device-ключ (localStorage) и передаёт его в `/connect`;

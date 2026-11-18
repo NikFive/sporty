@@ -202,6 +202,35 @@ const back = (res, params) => redirect(res, `${PUBLIC_URL}/?${new URLSearchParam
 
 const cache = new Map()
 
+function readJson(req, limit = 256 * 1024) {
+  return new Promise((resolve, reject) => {
+    let size = 0
+    const chunks = []
+    req.on('data', (c) => {
+      size += c.length
+      if (size > limit) { reject(Object.assign(new Error('too large'), { status: 413 })); req.destroy() }
+      else chunks.push(c)
+    })
+    req.on('end', () => { try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')) } catch { reject(Object.assign(new Error('bad json'), { status: 400 })) } })
+    req.on('error', reject)
+  })
+}
+
+// Отметки «Сделано»: { "YYYY-MM-DD:workout_id": { d: 1|0, at: ms } }, слияние last-write-wins по at.
+const DONE_KEY = /^\d{4}-\d{2}-\d{2}:[a-z0-9_]{1,80}$/
+function mergeDone(rec, items) {
+  const done = (rec.done ||= {})
+  const now = Date.now()
+  let changed = 0
+  for (const [k, v] of Object.entries(items || {})) {
+    if (!DONE_KEY.test(k) || !v || typeof v.at !== 'number') continue
+    const at = Math.min(v.at, now + 60_000)
+    if (!done[k] || at > done[k].at) { done[k] = { d: v.d ? 1 : 0, at }; changed++ }
+  }
+  if (changed) persist()
+  return done
+}
+
 async function handle(req, res) {
   const url = new URL(req.url, 'http://x')
   const p = url.pathname.replace(/\/+$/, '')
@@ -279,11 +308,21 @@ async function handle(req, res) {
     }
   }
 
+  if (p === '/api/done') {
+    if (req.method === 'POST') {
+      const body = await readJson(req).catch((e) => e)
+      if (body instanceof Error) return send(res, body.status || 400, { error: body.message })
+      return send(res, 200, { items: mergeDone(rec, body.items) })
+    }
+    return send(res, 200, { items: rec.done || {} })
+  }
+
   if (p === '/api/whoop/disconnect' && req.method === 'POST') {
     try {
       if (rec.tokens) await fetch(API + '/v2/user/access', { method: 'DELETE', headers: { authorization: `Bearer ${await accessToken(athlete)}` } })
     } catch (e) { log('revoke', e.message) }
-    delete db.athletes[athlete]
+    // отметки «Сделано» оставляем — это история тренировок, а не данные WHOOP
+    db.athletes[athlete] = { devices: [], done: rec.done || {} }
     cache.delete(athlete)
     persist()
     return send(res, 200, { ok: true })

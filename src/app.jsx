@@ -7,6 +7,7 @@ import { Workout } from './screens/Workout'
 import { ChevronRight, Flag } from 'lucide-preact'
 import { PullToRefresh } from './components/PullToRefresh'
 import { consumeRefreshedFlag } from './lib/update'
+import { useDoneSync } from './lib/done'
 
 // Выбранный атлет: cookie на 400 дней + localStorage как запасной вариант.
 const KEY = 'sporty.athlete'
@@ -96,6 +97,7 @@ export function App() {
   })
   const now = useToday()
   const route = useRoute(now)
+  useDoneSync(athlete)
   const pick = (a) => { setAthlete(a); save(a) }
   const weeks = weeksToRace(now)
 
