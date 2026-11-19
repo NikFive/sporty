@@ -9,7 +9,7 @@ PWA (Vite + Preact) with a 70.3 Ironman training plan for two athletes (nikita, 
 - `src/app.jsx`, `src/screens/`, `src/components/`, `src/styles.css`: the UI. It only reads `src/lib/plan.js`.
 - `server/`: the WHOOP API (`whoop.mjs`, zero-dep Node, systemd `sporty-api`, nginx proxies `/api/`). See `server/README.md`; it is deployed by hand, not by Actions.
 - `server/coach.mjs`: the daily AI coach (Claude, structured output, rule validation); `scripts/export-coach.mjs` exports the resolved plan + coaching.md for it at build time. Changing `docs/coaching.md` changes the coach's behaviour.
-- `src/lib/whoop.js` (client, device key, coach hook), `src/lib/coach.js` (overlay of the coach decision onto the plan), `src/lib/readiness.js` (WHOOP → day adjustment model, rules in `docs/coaching.md` § «Готовность»), `src/components/Readiness.jsx` (card on today's screen).
+- `src/lib/whoop.js` (client, device key, coach hook), `src/lib/coach.js` (coach state + the single overlay of its decision onto the plan: `getDay()` returns the adjusted day everywhere, `getPlanDay()` the raw plan; season analytics use the raw plan), `src/screens/Coach.jsx` (`#/coach/<date>` details), `src/lib/readiness.js` (WHOOP → day adjustment model, rules in `docs/coaching.md` § «Готовность»), `src/components/Readiness.jsx` (verdict row on today's screen). UI work goes through the unslop skill; the coach has no colour or icon of its own — the «было» value next to the new one is its only marker.
 - `.github/workflows/deploy.yml`: on every push to `main`, it runs `npm ci && npm run build` and rsyncs `dist/` to the server.
 
 ## To edit the training plan
