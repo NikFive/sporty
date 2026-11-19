@@ -4,6 +4,8 @@ import { Day } from './screens/Day'
 import { Profile } from './screens/Profile'
 import { Plan } from './screens/Plan'
 import { Workout } from './screens/Workout'
+import { Coach } from './screens/Coach'
+import { CoachCtx, useCoachState } from './lib/coach'
 import { ChevronRight, Flag } from 'lucide-preact'
 import { PullToRefresh } from './components/PullToRefresh'
 import { consumeRefreshedFlag } from './lib/update'
@@ -32,6 +34,7 @@ function parseRoute(hash) {
   const p = hash.replace(/^#\/?/, '').split('/').filter(Boolean)
   if (p[0] === 'plan') return { view: 'plan' }
   if (p[0] === 'me') return { view: 'me' }
+  if (p[0] === 'coach') return { view: 'coach', date: isDate(p[1]) ? p[1] : null }
   if (p[0] === 'd' && isDate(p[1])) return { view: 'workout', date: p[1], idx: Number(p[2]) || 0 }
   if ((p[0] === 'day' || p[0] === 'week') && isDate(p[1])) return { view: 'day', date: p[0] === 'week' ? mondayOf(p[1]) : p[1] }
   return { view: 'day', date: null }
@@ -98,6 +101,8 @@ export function App() {
   const now = useToday()
   const route = useRoute(now)
   useDoneSync(athlete)
+  // тренер: решение на сегодня, наложение на план для getDay — до рендера экранов
+  const coachState = useCoachState(athlete, now)
   const pick = (a) => { setAthlete(a); save(a) }
   const weeks = weeksToRace(now)
 
@@ -111,6 +116,11 @@ export function App() {
     }
     return consumeRefreshedFlag() ? 'План обновлён' : false
   })
+  useEffect(() => {
+    const on = (e) => setToast(e.detail)
+    addEventListener('sporty:toast', on)
+    return () => removeEventListener('sporty:toast', on)
+  }, [])
   useEffect(() => {
     if (!toast) return
     const t = setTimeout(() => setToast(false), 2600)
@@ -152,10 +162,12 @@ export function App() {
     const goBack = () => (returnHash ? history.back() : location.replace('#/'))
     screen = <Profile athlete={athlete} back={back} onPick={(a) => { pick(a); goBack() }} />
   }
+  else if (route.view === 'coach') screen = <Coach athlete={athlete} todayDate={now} />
   else if (route.view === 'workout') screen = <Workout date={route.date} idx={route.idx} athlete={athlete} todayDate={now} />
   else screen = <Day date={route.date || now} athlete={athlete} todayDate={now} dir={route.dir} />
 
   return (
+    <CoachCtx.Provider value={coachState}>
     <div class="app">
       {route.view === 'day' && (
         <header class="top">
@@ -173,5 +185,6 @@ export function App() {
       <PullToRefresh />
       {toast && <div class="toast" role="status">{toast}</div>}
     </div>
+    </CoachCtx.Provider>
   )
 }

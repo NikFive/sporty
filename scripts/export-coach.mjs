@@ -11,7 +11,7 @@ try {
   for (const a of P.ATHLETES) {
     days[a] = {}
     for (let d = P.addDays(P.PLAN_START, -7); d <= P.addDays(P.PLAN_END, 7); d = P.addDays(d, 1)) {
-      const day = P.getDay(d, a)
+      const day = P.getPlanDay(d, a)
       days[a][d] = {
         rest: day.rest || undefined,
         outside: day.outside || undefined,
@@ -28,7 +28,7 @@ try {
   const workouts = {}
   for (const id of Object.keys(P.plan.workouts)) {
     const w = P.getWorkout(id)
-    workouts[id] = { sport: w.sport, title: w.title, warmup: w.warmup, main: w.main, cooldown: w.cooldown, why: w.why, notes: w.notes, minutes: Math.round(w.minutes), zone: P.keyZone(w), formula: P.formula(w) || undefined }
+    workouts[id] = { sport: w.sport, title: w.title, warmup: w.warmup, main: w.main, cooldown: w.cooldown, why: w.why, notes: w.notes, minutes: Math.round(w.minutes), zone: P.keyZone(w), formula: P.formula(w) || undefined, segments: P.flatSegments(w.segments).reduce((a, [m, z]) => { const l = a[a.length - 1]; if (l && l[1] === z) l[0] = Math.round((l[0] + m) * 100) / 100; else a.push([Math.round(m * 100) / 100, z]); return a }, []) }
   }
   const out = {
     builtAt: new Date().toISOString(),

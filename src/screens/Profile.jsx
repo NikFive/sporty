@@ -74,7 +74,7 @@ function Whoop({ athlete }) {
               </span>
               <Check size={22} strokeWidth={2.5} class="check" />
             </div>
-            <button class="cell" onClick={() => confirm(`Отключить WHOOP для ${name}?`) && disconnect(athlete)}>
+            <button class="cell" onClick={() => confirm('Отключить WHOOP? Тренер перестанет править план') && disconnect(athlete)}>
               <span class="badge bg-mob"><Unlink size={18} strokeWidth={2} /></span>
               <span class="cell-text"><span class="cell-title is-danger" style="display:block">Отключить</span></span>
             </button>
@@ -85,7 +85,7 @@ function Whoop({ athlete }) {
             <span class="cell-text">
               <span class="cell-title" style="display:block">{st?.connected ? 'Подключить на этом телефоне' : 'Подключить WHOOP'}</span>
               <span class="cell-sub" style="display:block">
-                {st == null ? 'Нет связи с сервером' : !st.configured ? 'Скоро — сервер ещё настраивается' : `Аккаунт ${name}`}
+                {st == null ? 'Нет связи с сервером' : !st.configured ? 'Скоро — сервер ещё настраивается' : `Профиль: ${name}`}
               </span>
             </span>
             <ChevronRight class="chev" size={18} strokeWidth={2.5} />
@@ -93,7 +93,7 @@ function Whoop({ athlete }) {
         )}
       </div>
       <p class="footnote">
-        Берём восстановление, HRV, пульс покоя, сон и strain. На главной покажем, как скорректировать сегодняшнюю тренировку.
+        Берём восстановление, HRV, пульс покоя, сон и strain. Каждое утро тренер по ним правит план на неделю.
         {mine ? ' Отметки «Сделано» сохраняются на сервере — переустановка приложения их не сотрёт' : ' После подключения отметки «Сделано» будут сохраняться на сервере'}
       </p>
     </>

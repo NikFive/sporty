@@ -1,5 +1,5 @@
 import { useEffect } from 'preact/hooks'
-import { ChevronRight, HeartPulse, MountainSnow, Moon, Sparkles, Users } from 'lucide-preact'
+import { ArrowLeftRight, ChevronRight, HeartPulse, MountainSnow, Moon, PencilLine, Users } from 'lucide-preact'
 import {
   ATHLETES, DAY_LONG, DAY_SHORT, MONTHS_GEN, PLAN_START, addDays, daysBetween, dayIndex, fmtDate, fmtHM,
   getDay, mondayOf, parse, plan,
@@ -7,10 +7,9 @@ import {
 import { useDoneVersion } from '../lib/done'
 import { goDay, useSwipe } from '../lib/nav'
 import { WeekStrip } from '../components/WeekStrip'
-import { SessionRow } from '../components/SessionRow'
-import { Readiness, dayAdjustment } from '../components/Readiness'
-import { useCoach, useWhoop } from '../lib/whoop'
-import { activeDecision, coachDay, inWindow } from '../lib/coach'
+import { SessionRow, TimeVal } from '../components/SessionRow'
+import { VerdictRow } from '../components/Readiness'
+import { dayTouched, useCoachCtx } from '../lib/coach'
 
 export function plural(n, one, few, many) {
   const m10 = n % 10, m100 = n % 100
@@ -59,23 +58,17 @@ function partnerInfo(date, athlete, day) {
 }
 
 export function Day({ date, athlete, todayDate, dir }) {
-  const planDay = getDay(date, athlete)
-  // ИИ-тренер: решение на сегодня может переставить дни и поправить тренировки на неделю вперёд
-  const coach = useCoach(athlete)
-  const dec = inWindow(date, todayDate) ? activeDecision(coach) : null
-  const cd = coachDay(date, athlete, planDay, dec)
-  const day = cd.day
+  // getDay уже с поправками тренера (наложение ставит App), см. lib/coach.js
+  const day = getDay(date, athlete)
+  const st = useCoachCtx()
+  const isToday = date === todayDate
   const total = day.items.reduce((a, it) => a + it.minutes, 0)
   const swipe = useSwipe(() => goDay(addDays(date, 1)), () => goDay(addDays(date, -1)))
   useDoneVersion()
   const partner = partnerInfo(date, athlete, day)
   const deload = day.week?.kind === 'deload' && !day.event && !day.rest
-  // WHOOP: показатели и корректировка — только для сегодняшнего дня
-  const whoop = useWhoop(athlete)
-  const isToday = date === todayDate
-  const v1 = isToday ? dayAdjustment(planDay, whoop) : null
-  const adj = v1 && (dec || coach?.feedback?.reverted ? { ...v1, changes: cd.changes } : v1)
-  const changes = dec ? cd.changes : adj?.changes
+  // плашка на других днях, которые тренер поменял (сегодня всё видно в вердикте)
+  const touched = !isToday && st?.dec && !st.dec.rules && dayTouched(date, st.dec)
 
   useEffect(() => {
     const on = (e) => {
@@ -104,12 +97,16 @@ export function Day({ date, athlete, todayDate, dir }) {
 
       <div class={`day-body anim-${dir || 'none'}`} key={date} {...swipe}>
         <div style="height:12px" />
-        {isToday && <Readiness day={day} whoop={whoop} adj={adj} coach={coach} athlete={athlete} />}
-        {cd.swappedWith && (
-          <div class="card event">
-            <span class="badge bg-str"><Sparkles size={18} strokeWidth={2} /></span>
-            <p class="event-solo">ИИ-тренер переставил: этот день поменялся местами с {DAY_SHORT[dayIndex(cd.swappedWith)].toLowerCase()} {parse(cd.swappedWith).getDate()}</p>
-          </div>
+        {isToday && st && <VerdictRow st={st} date={date} />}
+        {touched && (
+          <a class="card note-row" href={`#/coach/${todayDate}`}>
+            <span class="badge note-badge">{day.swappedWith ? <ArrowLeftRight size={18} strokeWidth={2} /> : <PencilLine size={18} strokeWidth={2} />}</span>
+            <span class="note-text">
+              {day.swappedWith ? `Тренер поменял местами этот день и ${DAY_SHORT[dayIndex(day.swappedWith)].toLowerCase()} ${parse(day.swappedWith).getDate()}` : 'Тренер поправил тренировки этого дня'}
+              <span>Решение от {dateLong(todayDate)}</span>
+            </span>
+            <ChevronRight class="chev" size={18} strokeWidth={2.5} />
+          </a>
         )}
         {day.event && !isRace && day.event.kind !== 'medical' && (
           <div class="card event">
@@ -139,7 +136,7 @@ export function Day({ date, athlete, todayDate, dir }) {
             <div class="card rest">
               <span class="rest-icon"><Moon size={26} strokeWidth={2} /></span>
               <h2>Выходной</h2>
-              <p>Сон, еда, прогулка — восстановление тоже часть плана</p>
+              <p>Сон, еда, прогулка</p>
             </div>
           )
         ) : day.outside ? (
@@ -158,7 +155,7 @@ export function Day({ date, athlete, todayDate, dir }) {
             )}
             <div class="card list">
               {day.items.map((it) => (
-                <SessionRow key={it.key} item={it} date={date} athlete={athlete} solo={partner.soloIds.has(it.id)} change={changes?.get(it.key)} />
+                <SessionRow key={it.key} item={it} date={date} athlete={athlete} solo={partner.soloIds.has(it.id)} />
               ))}
             </div>
           </>
@@ -187,6 +184,7 @@ function Ahead({ date, athlete }) {
       <div class="card list">
         {days.map((d) => {
           const total = d.items.reduce((a, it) => a + it.minutes, 0)
+          const planned = d.items.reduce((a, it) => a + (it.plannedMinutes ?? it.minutes), 0)
           // главная тренировка дня (самая длинная) + счётчик остальных
           const main = [...d.items].sort((a, b) => b.minutes - a.minutes)[0]
           const titles = main ? `${main.workout?.title || ''}${d.items.length > 1 ? ` +${d.items.length - 1}` : ''}` : ''
@@ -196,9 +194,12 @@ function Ahead({ date, athlete }) {
                 {DAY_SHORT[dayIndex(d.date)]} {parse(d.date).getDate()}
               </span>
               <span class={`ahead-title${d.rest || d.outside ? ' is-off' : ''}`}>
+                {d.swappedWith && <ArrowLeftRight class="ahead-swap" size={15} strokeWidth={2.25} aria-label="переставлено тренером" />}
                 {d.rest ? (d.event?.kind === 'medical' ? 'Восстановление' : 'Выходной') : d.outside ? '—' : titles}
               </span>
-              {total > 0 && <span class="cell-value num">{fmtHM(total)}</span>}
+              {d.swappedWith ? (
+                <span class="val num"><span class="val-now">{fmtHM(total)}</span><span class="was">из {DAY_SHORT[dayIndex(d.swappedWith)].toLowerCase()}</span></span>
+              ) : (total > 0 || planned > 0) && <TimeVal now={total} was={planned !== total ? planned : null} label={`${total} мин вместо ${planned}, изменено тренером`} />}
             </button>
           )
         })}

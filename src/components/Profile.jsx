@@ -16,9 +16,11 @@ const fmtTick = (m) => (m >= 60 && m % 60 === 0 ? `${m / 60} ч` : m >= 60 ? `${
  * Профиль тренировки. Сегменты и подписи позиционируются в одних и тех же процентах
  * (минута / общее время), поэтому отметки времени точно совпадают с границами зон.
  */
-export function Profile({ segments, height = 88 }) {
+export function Profile({ segments, ghost = null, height = 88 }) {
   const flat = flatSegments(segments)
-  const total = flat.reduce((a, [m]) => a + m, 0) || 1
+  // ghost — исходный профиль плана пунктиром за новым (правка тренера); ось — по более длинному
+  const gflat = ghost ? flatSegments(ghost) : []
+  const total = Math.max(flat.reduce((a, [m]) => a + m, 0), gflat.reduce((a, [m]) => a + m, 0)) || 1
   const pct = (m) => `${(m / total) * 100}%`
 
   let at = 0
@@ -27,6 +29,9 @@ export function Profile({ segments, height = 88 }) {
     at += m
     return b
   })
+
+  let gat = 0
+  const ghosts = gflat.map(([m, z]) => { const b = { start: gat, m, z }; gat += m; return b })
 
   const step = tickStep(total)
   const ticks = []
@@ -39,6 +44,9 @@ export function Profile({ segments, height = 88 }) {
     <div class="pf">
       <div class="pf-plot" style={{ height: `${height}px` }} aria-hidden="true">
         {ticks.map((t) => <span key={`g${t}`} class="pf-grid" style={{ left: pct(t) }} />)}
+        {ghosts.map((b, i) => (
+          <span key={`gh${i}`} class="pf-ghost" style={{ left: pct(b.start), width: pct(b.m), height: `${(LEVEL[b.z] ?? 0.3) * 100}%` }} />
+        ))}
         {bars.map((b, i) => (
           <span
             key={i}

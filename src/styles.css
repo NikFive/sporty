@@ -353,40 +353,140 @@ a.race { display: block; color: inherit; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 h1[tabindex="-1"]:focus { outline: none; }
 
-/* ───── Готовность (WHOOP) ───── */
-.rd { padding: 16px; margin-bottom: 12px; }
-.rd-head { display: flex; align-items: center; gap: 14px; }
-.rd-head-text { min-width: 0; }
-.ring { flex: none; }
-.ring-num { font: 700 19px var(--font); fill: var(--label); font-variant-numeric: tabular-nums; }
-.rd-kicker { display: block; font-size: 13px; color: var(--label-2); }
-.rd-title { font-size: 20px; line-height: 25px; font-weight: 700; margin-top: 1px; }
-.rd-summary { font-size: 15px; line-height: 20px; color: var(--label-2); margin-top: 2px; }
-.rd-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 0.5px solid var(--separator); }
-.rd-stat { display: flex; flex-direction: column; min-width: 0; }
-.rd-stat-label { font-size: 12px; color: var(--label-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rd-stat-value { font-size: 20px; line-height: 26px; font-weight: 600; }
-.rd-stat-value.is-warn { color: var(--rec-yellow); }
-.rd-stat-sub { font-size: 12px; color: var(--label-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rd-changes { margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--separator); display: flex; flex-direction: column; gap: 8px; }
-.rd-changes li { display: flex; flex-direction: column; }
-.rd-ch-title { font-size: 15px; font-weight: 600; }
-.rd-ch-how { font-size: 14px; color: var(--label-2); }
-.rd-ch-how s, .is-adjusted s { color: var(--label-3); }
-.rd-why { font-size: 13px; line-height: 18px; color: var(--label-2); margin-top: 12px; }
-.cell-value.is-adjusted { color: var(--rec-yellow); white-space: nowrap; }
-.rd-connect { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 12px; }
-.rd-connect-dot { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 4px solid var(--rec-green); border-right-color: var(--rec-yellow); border-bottom-color: var(--rec-red); }
-.rd-connect:active { background: var(--glass-strong); }
-.is-danger { color: #ff6961; }
-.cell.is-disabled { opacity: 0.55; pointer-events: none; }
-@media (max-width: 360px) { .rd-stat-value { font-size: 17px; } }
-.rd-spark { vertical-align: -2px; color: #bf9bff; }
-.rd-ch-date { color: var(--label-2); font-weight: 500; }
-.rd-thinking { color: var(--label); }
-.rd-actions { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--separator); }
-.rd-vote, .rd-revert { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; border-radius: 18px; background: var(--glass); box-shadow: var(--glass-hi), 0 0 0 0.5px var(--glass-border); color: var(--label-2); font-size: 15px; transition: transform .15s var(--ease); }
-.rd-vote { width: 44px; }
-.rd-vote.is-on { color: var(--label); background: var(--glass-strong); }
-.rd-revert { margin-left: auto; padding: 0 14px; color: var(--accent-text); }
-.rd-vote:active, .rd-revert:active { transform: scale(0.96); }
+/* ───── Тренер: вердикт, правки, экран «Тренер» ───── */
+:root {
+  /* «было»: исходное значение плана рядом с новым — подпись всей фичи */
+  --was: var(--label-3);
+  --ring-track: var(--glass-strong);
+}
+
+/* ── Вердикт: одна строка над списком тренировок ── */
+.vd {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 72px; padding: 12px 10px 12px 14px; margin-bottom: 8px;
+  transition: background-color .15s var(--ease);
+}
+a.vd:active { background: var(--glass-strong); }
+.vd-ring { flex: none; width: 44px; height: 44px; }
+.vd-ring .rn { font: 700 15px var(--font); fill: var(--label); font-variant-numeric: tabular-nums; }
+.vd-ring .rn.is-empty { fill: var(--label-3); font-weight: 600; }
+.vd-text { flex: 1; min-width: 0; }
+.vd-title {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  font-size: 17px; line-height: 22px; font-weight: 600;
+}
+.vd-sub { display: block; margin-top: 2px; font-size: 14px; line-height: 19px; color: var(--label-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vd-spin { flex: none; color: var(--label-2); animation: ptr-spin .9s linear infinite; }
+.vd.is-muted .vd-title { color: var(--label-2); font-weight: 500; }
+
+/* ── Строка тренировки: новое значение + «было» ── */
+.val { flex: none; display: flex; flex-direction: column; align-items: flex-end; }
+.val-now { font-size: 17px; line-height: 22px; color: var(--label-2); }
+.was { font-size: 13px; line-height: 18px; color: var(--was); white-space: nowrap; }
+.session.is-changed .val-now { color: var(--label); }
+.chg { color: var(--label); }
+.session.is-cancelled .cell-title { color: var(--label-3); text-decoration: line-through; text-decoration-thickness: 1px; }
+.session.is-cancelled .badge { opacity: .4; }
+.done-slot { flex: none; width: 44px; }
+
+/* «Дальше»: второе значение под временем */
+.ahead .val-now { font-size: 17px; }
+.ahead-swap { color: var(--label-3); vertical-align: -2px; margin-right: 6px; }
+
+/* Заметка дня, изменённого тренером (не сегодня): переставлен / облегчён */
+.note-row { display: flex; align-items: center; gap: 12px; padding: 12px 10px 12px 14px; margin-bottom: 8px; min-height: 56px; }
+.note-row .badge { background: var(--glass-strong); color: var(--label); }
+.note-text { flex: 1; min-width: 0; font-size: 15px; line-height: 20px; }
+.note-text span { display: block; font-size: 14px; line-height: 19px; color: var(--label-2); }
+
+/* ── Экран «Тренер» ── */
+.cd-head { margin: 8px 4px 0; }
+.cd-title { font-size: 28px; line-height: 34px; font-weight: 700; }
+.cd-meta { font-size: 15px; line-height: 20px; color: var(--label-2); margin-top: 4px; }
+.cd-lead { font-size: 17px; line-height: 24px; margin: 16px 4px 0; }
+
+.cd-rec { padding: 16px; margin-top: 12px; }
+.cd-rec-top { display: flex; align-items: center; gap: 14px; }
+.cd-rec-top .vd-ring { width: 64px; height: 64px; }
+.cd-rec-top .rn { font-size: 20px; }
+.cd-rec-label { font-size: 13px; line-height: 18px; color: var(--label-2); }
+.cd-rec-val { font-size: 17px; line-height: 22px; font-weight: 600; }
+.cd-rec-note { font-size: 14px; line-height: 19px; color: var(--label-2); margin-top: 1px; }
+
+/* 7 дней recovery: столбики в цветах WHOOP — единственное «яркое» место экрана */
+.trend { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 16px; }
+.tr { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.tr-n { font-size: 12px; line-height: 16px; color: var(--label-2); }
+.tr-plot { width: 100%; height: 56px; display: flex; align-items: flex-end; justify-content: center; border-bottom: 0.5px solid var(--separator); }
+.tr-bar { width: 20px; border-radius: 4px 4px 1px 1px; }
+.tr-d { font-size: 12px; line-height: 16px; color: var(--label-3); }
+.tr.is-today .tr-n, .tr.is-today .tr-d { color: var(--label); font-weight: 600; }
+.bar-g { background: var(--rec-green); } .bar-y { background: var(--rec-yellow); } .bar-r { background: var(--rec-red); }
+
+.cd-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 0.5px solid var(--separator); }
+.cd-stat { display: flex; flex-direction: column; min-width: 0; }
+.cd-stat-l { font-size: 12px; line-height: 16px; color: var(--label-2); white-space: nowrap; }
+.cd-stat-v { font-size: 20px; line-height: 26px; font-weight: 600; }
+.cd-stat-v.is-warn { color: var(--rec-yellow); }
+.cd-stat-s { font-size: 12px; line-height: 16px; color: var(--label-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* правки тренера списком */
+.ch .cell { align-items: flex-start; gap: 12px; padding: 12px 14px; }
+.ch .badge { margin-top: 2px; }
+.ch-day { display: block; font-size: 13px; line-height: 18px; color: var(--label-2); }
+.ch-title { display: block; font-size: 17px; line-height: 22px; font-weight: 600; }
+.ch-how { display: block; font-size: 15px; line-height: 20px; color: var(--label-2); margin-top: 2px; }
+.ch .val { padding-top: 0; }
+.ch .cell + .cell::before { left: 58px; }
+
+/* причины: обычный текст в ячейках, без маркеров */
+.rs .cell { min-height: 0; padding: 12px 16px; font-size: 15px; line-height: 20px; }
+.rs .cell + .cell::before { left: 16px; }
+
+.cd-note { padding: 14px 16px; font-size: 15px; line-height: 21px; }
+
+/* отзыв + откат */
+.fb { display: flex; align-items: center; gap: 8px; min-height: 56px; padding: 8px 10px 8px 16px; }
+.fb-q { flex: 1; font-size: 17px; }
+.vote {
+  width: 44px; height: 36px; border-radius: 18px; display: grid; place-items: center;
+  background: var(--glass); box-shadow: var(--glass-hi), 0 0 0 0.5px var(--glass-border); color: var(--label-2);
+  transition: background-color .15s var(--ease), color .15s var(--ease), transform .15s var(--ease);
+}
+.vote.is-on { background: rgba(255, 255, 255, 0.2); color: var(--label); }
+.vote:active { transform: scale(0.96); }
+.act { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 16px; font-size: 17px; color: var(--accent-text); width: 100%; }
+.act-wrap .act + .act { border-top: 0.5px solid var(--separator); }
+.cd-foot { font-size: 13px; line-height: 18px; color: var(--label-2); margin: 8px 4px 0; }
+.cd-off { opacity: .55; }
+
+/* ── Экран тренировки: версия тренера / по плану ── */
+.wo-seg { margin-top: 16px; }
+.wo-note { margin-top: 12px; padding: 12px 16px; }
+.wo-note-l { font-size: 13px; line-height: 18px; font-weight: 600; color: var(--label-2); }
+.wo-note p { font-size: 15px; line-height: 21px; margin-top: 2px; }
+.wo-note.is-plan { box-shadow: var(--glass-hi), inset 0 0 0 0.5px var(--glass-border); }
+.ex li .sets { display: flex; flex-direction: column; align-items: flex-end; flex: none; max-width: 48%; text-align: right; }
+.ex li .sets .num { color: var(--label-2); }
+.ex li.is-changed .sets .num { color: var(--label); }
+/* «призрак» исходного профиля за новым */
+.pf-ghost { position: absolute; bottom: 0; border: 1px dashed rgba(235, 235, 245, 0.32); border-bottom: 0; border-radius: 3px 3px 0 0; background: transparent; }
+.pf-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 12px; line-height: 16px; color: var(--label-2); }
+.pf-legend i { display: inline-block; width: 12px; height: 8px; margin-right: 6px; border-radius: 2px; vertical-align: 0; }
+.pf-legend .lg-was { border: 1px dashed rgba(235, 235, 245, 0.45); }
+
+.was-i { color: var(--was); }
+.ch-meta { display: block; font-size: 15px; line-height: 20px; color: var(--label); margin-top: 2px; }
+.ch-how { margin-top: 4px; }
+.ch-chev { align-self: center; }
+.ex { gap: 10px; }
+
+.val s.was { text-decoration-thickness: 1px; }
+
+.note-badge { background: var(--glass-strong); color: var(--label); }
+a.note-row:active { background: var(--glass-strong); }
+.ahead .val { align-items: flex-end; }
+.is-off { opacity: .55; }
+.link { color: var(--accent-text); font: inherit; padding: 0; }
+.ex li .sets .ex-sets { max-width: none; }
+@media (prefers-reduced-motion: reduce) { .vd-spin { animation: none; } }

@@ -124,7 +124,16 @@ export const weekNumber = (date) => {
  * → { date, rest, outside, event, override, week, phase, template, scale, items: [{ workout, together, key }] }
  * event/override — только те, что касаются этого атлета (иначе null).
  */
+// Наложение поверх плана (решение тренера на неделю): ставит App, читают все через getDay.
+// getPlanDay — исходный план без наложения (режим «По плану», перестановки дней).
+let dayOverlay = null
+export const setDayOverlay = (fn) => { dayOverlay = fn }
 export function getDay(date, athlete) {
+  const d = getPlanDay(date, athlete)
+  return dayOverlay ? dayOverlay(d, athlete) : d
+}
+
+export function getPlanDay(date, athlete) {
   const week = weekOf(date)
   const phase = phaseOf(date)
   const event = eventOf(date, athlete)
@@ -160,8 +169,9 @@ export function getDay(date, athlete) {
   }
 }
 
-export function getWeek(monday, athlete) {
-  const days = DAY_KEYS.map((_, i) => getDay(addDays(monday, i), athlete))
+// raw = true — исходный план без правок тренера (аналитика сезона считает плановый объём)
+export function getWeek(monday, athlete, raw = false) {
+  const days = DAY_KEYS.map((_, i) => (raw ? getPlanDay : getDay)(addDays(monday, i), athlete))
   return { monday, days, week: weekOf(monday), stats: weekStats(days) }
 }
 
@@ -311,7 +321,7 @@ export function neighborSession(date, key, athlete, dir, limit = 21) {
 /** Неделя для «Сезона»: минуты по группам зон. */
 export function seasonWeeks(athlete) {
   return plan.weeks.map((w, i) => {
-    const { days, stats } = getWeek(w.start, athlete)
+    const { days, stats } = getWeek(w.start, athlete, true)
     const events = [...new Set(days.map((d) => d.event).filter(Boolean))]
     return { n: i + 1, start: w.start, kind: w.kind, template: plan.templates[w.template], phase: phaseOf(w.start), events, stats }
   })
@@ -330,7 +340,7 @@ export function weeklySeries(athlete, todayDate = today()) {
   let prev = null
   return plan.weeks.map((w, i) => {
     const end = addDays(w.start, 6)
-    const { stats } = getWeek(w.start, athlete)
+    const { stats } = getWeek(w.start, athlete, true)
     const phase = phaseOf(w.start)
     const inWeek = (e) => e.start <= end && e.end >= w.start && appliesToAthlete(e, athlete)
     const trip = plan.events.find((e) => e.kind === 'trip' && inWeek(e))

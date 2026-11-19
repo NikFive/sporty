@@ -126,15 +126,15 @@ export function adjustDay(day, whoopData) {
   const pct = from ? Math.round((1 - to / from) * 100) : 0
 
   let summary
-  if (a.calibrating) summary = 'WHOOP ещё калибруется (первые дни) — план не трогаем, просто слушай себя'
-  else if (day?.event?.kind === 'race') summary = 'День старта — план не меняем. Удачи!'
+  if (a.calibrating) summary = 'WHOOP ещё калибруется, пару дней план без правок'
+  else if (day?.event?.kind === 'race') summary = 'План не меняется. Удачи'
   else if (day?.rest) summary = a.level === 'green' ? 'Выходной. Восстановление хорошее — можно прогулку' : 'Выходной — сон, еда и прогулка'
   else if (!items.length) summary = null
   else if (!changes.size) summary = a.level === 'green'
     ? (a.flags.length ? 'По плану, но следи за пульсом: не входит в зону — сделай легче' : a.score >= 85 ? 'Восстановление отличное — хороший день для ключевой работы' : 'Всё по плану')
-    : 'Тренировки сегодня и так лёгкие — оставляем как есть'
+    : 'Сегодня и так всё лёгкое — по плану'
   else if (pct > 0) summary = `Объём −${pct}%: ${fmtHM(from)} → ${fmtHM(to)}`
-  else summary = 'Объём тот же, снижаем интенсивность'
+  else summary = 'Время то же, интенсивность ниже'
 
   return {
     ...a,
